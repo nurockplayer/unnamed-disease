@@ -312,3 +312,23 @@ test('Tab and Shift+Tab stay inside an open dialog', async ({ page }) => {
     expect(inside).toBe(true);
   }
 });
+
+test('focus survives re-renders inside a dialog', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('start').click();
+  await page.getByTestId('skip').click();
+  await page.getByTestId('spot-E01').focus();
+  await page.keyboard.press('Enter');
+  await page.getByTestId('toggle-sources').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('provenance')).toBeVisible();
+  await expect(page.getByTestId('toggle-sources')).toBeFocused();
+  await page.getByTestId('pin').focus();
+  await page.keyboard.press('Enter');
+  await page.getByTestId('slot-0').focus();
+  await page.keyboard.press('Enter');
+  const inBoard = await page.evaluate(
+    () => !!document.querySelector('[data-testid="board"]')?.contains(document.activeElement),
+  );
+  expect(inBoard).toBe(true);
+});

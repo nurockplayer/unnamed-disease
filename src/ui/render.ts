@@ -160,7 +160,7 @@ function reader(s: State): string {
     <h2 id="doc-title">${esc(e.title)}</h2>
     <div class="doc-body">${e.body.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
     <p class="takeaway"><b>你記下：</b>${esc(e.takeaway)}</p>
-    <button class="link" data-action="toggleSources" data-testid="toggle-sources">
+    <button class="link" data-action="toggleSources" data-key="toggleSources" data-testid="toggle-sources">
       ${s.showSources ? '收起史料註記 ▴' : '史料註記 ▾'}</button>
     ${
       s.showSources
@@ -173,7 +173,7 @@ function reader(s: State): string {
         : ''
     }
     <div class="modal-actions">
-      <button class="ghost" data-action="pin" data-id="${e.id}" data-testid="pin">放上推理板</button>
+      <button class="ghost" data-action="pin" data-id="${e.id}" data-key="pin" data-testid="pin">放上推理板</button>
       <button class="primary" data-action="closeReading" data-key="closeReading" data-testid="close-reader">關閉</button>
     </div>
   </article>
@@ -184,7 +184,7 @@ function board(s: State): string {
   const slot = (i: 0 | 1) => {
     const id = s.slots[i];
     return id
-      ? `<button class="slot filled" data-action="clearSlot" data-index="${i}" data-testid="slot-${i}">
+      ? `<button class="slot filled" data-action="clearSlot" data-index="${i}" data-key="slot-${i}" data-testid="slot-${i}">
            <small>證據${i === 0 ? '一' : '二'}</small><b>${esc(EVIDENCE[id].title)}</b><em>點一下移除</em></button>`
       : `<div class="slot empty" data-testid="slot-${i}"><small>證據${i === 0 ? '一' : '二'}</small>從下方線索選一份</div>`;
   };
@@ -235,7 +235,7 @@ function board(s: State): string {
     }
 
     <div class="modal-actions">
-      <button class="ghost" data-action="closeBoard" data-testid="close-board">回到桌前</button>
+      <button class="ghost" data-action="closeBoard" data-key="closeBoard" data-testid="close-board">回到桌前</button>
       <button class="primary" data-action="submit" data-key="submit" data-testid="submit" ${ready ? '' : 'disabled'}>
         向黑爾先生提出</button>
     </div>

@@ -53,6 +53,10 @@ function draw(prev: State | null = null, action: Action | null = null) {
     target = root.querySelector<HTMLElement>('.board-reply');
   } else {
     target = focusable(byKey(activeKey));
+    // 同一個對話框重繪、原本的元件消失時（例如移除證據格），留在框內
+    if (!target && now) {
+      target = dialog?.querySelector<HTMLElement>('[data-key]:not([disabled])') ?? null;
+    }
   }
   if (!target && prev && prev.phase !== state.phase) {
     target = root.querySelector<HTMLElement>('[data-key="advance"], [data-key="start"], [data-key="restart"]');

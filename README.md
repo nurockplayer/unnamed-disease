@@ -6,7 +6,7 @@
 
 ## 立即試玩（第一案・第一段，約 5 分鐘）
 
-需求：Node 22.12+ 或 24+、pnpm。
+需求：Node 22.12+、24 或 26+（與 Vite 8／Vitest 5 一致）、pnpm。
 
 ```bash
 pnpm install
