@@ -4,6 +4,20 @@
 
 本專案隸屬於一個正在規劃的跨領域歷史懸疑冒險系列。每篇先讓玩家投入角色、案件與困境，從調查中理解證據、不確定性與歷史，而不是先上科學課。
 
+## 立即試玩（第一案・第一段，約 5 分鐘）
+
+需求：Node 22+、pnpm。
+
+```bash
+pnpm install
+pnpm dev          # 開發模式，瀏覽器開 http://localhost:5173
+pnpm build && pnpm preview   # 以正式建置試玩
+pnpm test         # 推理判定單元測試（Vitest）
+pnpm e2e          # 真實 Chromium 走完整流程（Playwright，桌面＋手機尺寸）
+```
+
+技術：Vite + TypeScript，原生 DOM／SVG／CSS（決策見 [D007](docs/DECISIONS.md)）。遊戲內容與史料出處集中在 [`src/content/case01.ts`](src/content/case01.ts)，推理判定在 [`src/logic/infer.ts`](src/logic/infer.ts)。
+
 ## 現階段方向（已確認）
 
 - **A：2D 定點調查、證據組合與真推理優先**；通過實際試玩，才擴充 **C：人物／鏡頭／場景演出**。
