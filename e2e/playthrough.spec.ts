@@ -121,7 +121,7 @@ async function tabTo(page: Page, testId: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.getByRole('button', { name: '開始調查', exact: true })).toBeVisible();
 });
 
@@ -264,7 +264,7 @@ test('keyboard only: Tab, Enter, Space and Escape reach and read a scene hotspot
 });
 
 test('keyboard focus moves into dialogs, returns to the opener, and lands on feedback', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('start').click();
   await page.getByTestId('skip').click();
 
@@ -294,7 +294,7 @@ test('keyboard focus moves into dialogs, returns to the opener, and lands on fee
 });
 
 test('Tab and Shift+Tab stay inside an open dialog', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('start').click();
   await page.getByTestId('skip').click();
   await page.getByTestId('spot-E01').focus();
@@ -314,7 +314,7 @@ test('Tab and Shift+Tab stay inside an open dialog', async ({ page }) => {
 });
 
 test('focus survives re-renders inside a dialog', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByTestId('start').click();
   await page.getByTestId('skip').click();
   await page.getByTestId('spot-E01').focus();
