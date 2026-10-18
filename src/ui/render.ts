@@ -1,4 +1,5 @@
 import {
+  BOARD_FRAME,
   CLAIMS,
   CLAIM_ORDER,
   ENDING,
@@ -13,7 +14,7 @@ import {
   WINDOW_TEXT,
   haleTalk,
 } from '../content/case01';
-import { canSubmit } from '../logic/state';
+import { canSubmit, failures } from '../logic/state';
 import type { ProvenanceKind, State, Verdict } from '../logic/types';
 import { deskScene, halePortrait } from './scene';
 
@@ -31,6 +32,7 @@ const KIND_LABEL: Record<ProvenanceKind, string> = {
 const VERDICT_LABEL: Record<Verdict, string> = {
   solved: '推論成立',
   partial: '有效的觀察——但還不夠',
+  ruledOut: '這個差別被排除了',
   competing: '另一種解釋',
   overreach: '結論說過頭了',
   insufficient: '證據撐不住這句話',
@@ -41,12 +43,12 @@ export function render(s: State): string {
     case 'title':
       return title();
     case 'intro':
-      return sequence(INTRO[s.introStep], s.introStep, INTRO.length, true);
+      return sequence(INTRO[s.introStep], s.introStep, INTRO.length, '跳過開場');
     case 'desk':
       return desk(s);
     case 'ending':
       return s.introStep < ENDING.length
-        ? sequence(ENDING[s.introStep], s.introStep, ENDING.length, false)
+        ? sequence(ENDING[s.introStep], s.introStep, ENDING.length, '跳過，看總結')
         : summary(s);
   }
 }
@@ -67,7 +69,7 @@ function sequence(
   beat: { speaker?: string; text: string },
   step: number,
   total: number,
-  skippable: boolean,
+  skipLabel: string,
 ): string {
   return `
 <main class="sequence" data-action="advance" data-testid="sequence">
@@ -78,7 +80,7 @@ function sequence(
   <div class="sequence-controls">
     <span class="progress">${step + 1} / ${total}</span>
     <button class="primary" data-action="advance" data-key="advance" data-testid="advance">繼續 ▸</button>
-    ${skippable ? '<button class="ghost" data-action="skipIntro" data-testid="skip">跳過開場</button>' : ''}
+    <button class="ghost" data-action="skipIntro" data-testid="skip">${skipLabel}</button>
   </div>
 </main>`;
 }
@@ -94,7 +96,8 @@ function desk(s: State): string {
       <span class="case">第一案〈沒有染病的人〉・紀錄室</span>
       <p class="objective" data-testid="objective"><b>目標</b>${esc(objective)}</p>
     </div>
-    <button class="ghost small" data-action="restart" data-testid="restart">重新開始</button>
+    <button class="ghost small${s.confirmRestart ? ' danger' : ''}" data-action="restart" data-key="restart-desk"
+            data-testid="restart">${s.confirmRestart ? '確定重新開始？再按一次' : '重新開始'}</button>
   </header>
 
   <section class="stage"${inert}>
@@ -141,7 +144,7 @@ function dialogueContent(s: State): string {
   return `
     <div class="speaker">${halePortrait()}<span>${HALE}</span></div>
     <div class="dialogue-body">
-      ${haleTalk(s.seen.length, s.flags.anomaly, s.flags.air)
+      ${haleTalk(s.seen.length, s.flags.anomaly, failures(s))
         .map((l) => `<p>「${esc(l)}」</p>`)
         .join('')}
     </div>`;
@@ -171,7 +174,7 @@ function reader(s: State): string {
     }
     <div class="modal-actions">
       <button class="ghost" data-action="pin" data-id="${e.id}" data-testid="pin">放上推理板</button>
-      <button class="primary" data-action="closeReading" data-key="closeReading" data-testid="close-reader">收進線索夾</button>
+      <button class="primary" data-action="closeReading" data-key="closeReading" data-testid="close-reader">關閉</button>
     </div>
   </article>
 </div>`;
@@ -195,11 +198,11 @@ function board(s: State): string {
 
     <div class="slots">${slot(0)}<span class="plus">＋</span>${slot(1)}</div>
 
-    <h3>線索（選兩份）</h3>
+    <h3>線索（選兩份；已選兩份時，再選會替換證據二）</h3>
     ${
-      s.seen.length < 2
-        ? '<p class="empty-note">還沒有足夠的線索。先讀讀桌上的文件。</p>'
-        : `<div class="chips">${EVIDENCE_ORDER.filter((id) => s.seen.includes(id))
+      s.seen.length === 0
+        ? '<p class="empty-note">還沒有線索。先讀讀桌上的文件。</p>'
+        : `${s.seen.length < 2 ? '<p class="empty-note">至少需要兩份線索，桌上還有東西沒讀。</p>' : ''}<div class="chips">${EVIDENCE_ORDER.filter((id) => s.seen.includes(id))
             .map((id) => {
               const on = s.slots.includes(id);
               return `<button class="chip${on ? ' on' : ''}" aria-pressed="${on}" data-action="toggleSlot"
@@ -208,12 +211,16 @@ function board(s: State): string {
             .join('')}</div>`
     }
 
-    <h3>所以……（選一個結論）</h3>
+    <h3>你的判斷</h3>
+    <p class="frame">${esc(BOARD_FRAME)}</p>
     <div class="claims">
       ${CLAIM_ORDER.map((id) => {
         const on = s.claim === id;
-        return `<button class="claim${on ? ' on' : ''}" aria-pressed="${on}" data-action="chooseClaim"
-                  data-id="${id}" data-key="claim-${id}" data-testid="claim-${id}">${esc(CLAIMS[id].text)}</button>`;
+        const out = s.attempts.some((t) => t.claim === id && t.verdict === 'ruledOut');
+        return `<button class="claim${on ? ' on' : ''}${out ? ' out' : ''}" aria-pressed="${on}" data-action="chooseClaim"
+                  data-id="${id}" data-key="claim-${id}" data-testid="claim-${id}">${esc(CLAIMS[id].text)}${
+                    out ? '<small>已排除</small>' : ''
+                  }</button>`;
       }).join('')}
     </div>
 
@@ -237,9 +244,9 @@ function board(s: State): string {
         ? `<details class="attempts"><summary>已提出過 ${s.attempts.length} 次</summary><ol>${s.attempts
             .map(
               (a) =>
-                `<li>${esc(EVIDENCE[a.evidence[0]].object)}＋${esc(EVIDENCE[a.evidence[1]].object)} → ${esc(
+                `<li>${esc(EVIDENCE[a.evidence[0]].object)}＋${esc(EVIDENCE[a.evidence[1]].object)} → 差別在於「${esc(
                   CLAIMS[a.claim].text,
-                )}<em>（${VERDICT_LABEL[a.verdict]}）</em></li>`,
+                )}」<em>（${VERDICT_LABEL[a.verdict]}）</em></li>`,
             )
             .join('')}</ol></details>`
         : ''
@@ -256,9 +263,17 @@ function summary(s: State): string {
   <h1>第一段・完</h1>
   <section>
     <h2>你的推論</h2>
-    <p class="final-claim">「${esc(CLAIMS[final.claim].text)}」</p>
+    <p class="final-claim">「同一條街、同樣的空氣，啤酒廠的人卻幾乎沒事。差別可能在於：${esc(
+      CLAIMS[final.claim].text,
+    )}。」</p>
     <p>依據：${esc(EVIDENCE[final.evidence[0]].title)}、${esc(EVIDENCE[final.evidence[1]].title)}</p>
-    <p class="muted">向黑爾先生提出了 ${s.attempts.length} 次。這不是定論——只是一條值得追下去的線。</p>
+    <p class="muted">向黑爾先生提出了 ${s.attempts.length} 次${
+      s.attempts.some((t) => t.verdict === 'ruledOut')
+        ? `，途中排除了：${[...new Set(s.attempts.filter((t) => t.verdict === 'ruledOut').map((t) => CLAIMS[t.claim].text))]
+            .map(esc)
+            .join('、')}`
+        : ''
+    }。這不是定論——只是一條值得追下去的線。</p>
   </section>
   <section>
     <h2>下一段</h2>
@@ -267,7 +282,7 @@ function summary(s: State): string {
   <section class="history">
     <h2>史實與虛構</h2>
     <ul>${HISTORY_NOTES.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
-    <p class="muted">主要依據：John Snow，《On the Mode of Communication of Cholera》第二版（1855）。</p>
+    <p class="muted">文中「Snow 1855」指 John Snow，《On the Mode of Communication of Cholera》第二版（1855），頁碼為原書頁碼。</p>
   </section>
   <button class="primary" data-action="restart" data-key="restart" data-testid="play-again">重新開始</button>
 </main>`;

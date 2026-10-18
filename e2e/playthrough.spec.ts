@@ -20,7 +20,7 @@ const introBeats = [
 
 const endingBeats = [
   '啤酒廠就在 Broad Street 上。',
-  '差別是，他們不去那個街泵打水。',
+  '差別在於，他們不去那個街泵打水。',
   '這證明不了什麼。也許是巧合',
   '但如果你說得對',
   'Poland Street 的濟貧院呢？',
@@ -53,7 +53,7 @@ async function openDocument(page: Page, id: Evidence) {
 
 async function collectDocument(page: Page, id: Evidence) {
   const reader = await openDocument(page, id);
-  await reader.getByRole('button', { name: '收進線索夾', exact: true }).click();
+  await reader.getByRole('button', { name: '關閉', exact: true }).click();
   await expect(page.getByTestId('reader')).toHaveCount(0);
   await expect(page.getByTestId(`clue-${id}`)).toContainText(documents[id].title);
 }
@@ -80,12 +80,16 @@ async function expectReply(page: Page, verdict: string) {
   await expect(page.getByTestId('summary')).toHaveCount(0);
 }
 
-async function finishCase(page: Page) {
+async function finishCase(page: Page, skipEnding = false) {
   await expect(page.getByTestId('submit')).toBeEnabled();
   await page.getByTestId('submit').click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByTestId('skip')).toHaveCount(0);
-  await advanceEveryBeat(page, endingBeats);
+  if (skipEnding) {
+    await expect(page.getByTestId('beat-text')).toContainText(endingBeats[0]);
+    await page.getByRole('button', { name: '跳過，看總結', exact: true }).click();
+  } else {
+    await advanceEveryBeat(page, endingBeats);
+  }
   await expect(page.getByTestId('summary')).toBeVisible();
   await expect(page.getByTestId('summary')).toContainText('第一段・完');
   await expect(page.getByTestId('summary')).toContainText('史實與虛構');
@@ -151,7 +155,7 @@ test('full investigation: every intro beat, four clues, feedback, ending and res
     if (id === 'E02') await capture(page, info, 'reader');
     await reader.getByRole('button', { name: '收起史料註記 ▴', exact: true }).click();
     await expect(reader.getByTestId('provenance')).toHaveCount(0);
-    await reader.getByRole('button', { name: '收進線索夾', exact: true }).click();
+    await reader.getByRole('button', { name: '關閉', exact: true }).click();
     await expect(page.getByTestId('reader')).toHaveCount(0);
     await expect(page.getByTestId(`clue-${id}`)).toContainText(documents[id].title);
   }
@@ -170,13 +174,18 @@ test('full investigation: every intro beat, four clues, feedback, ending and res
   await openBoard(page);
   await placePair(page, 'E01', 'E02');
   await expect(page.getByTestId('submit')).toBeDisabled();
-  await page.getByTestId('claim-anomaly').click();
+  await page.getByTestId('claim-water').click();
   await page.getByTestId('submit').click();
   await expectReply(page, '有效的觀察');
   await expect(objective).not.toHaveText(originalObjective);
   await expect(objective).toContainText('啤酒廠的人和街坊差在哪裡？');
   await page.getByTestId('board-reply').scrollIntoViewIfNeeded();
   await capture(page, info, 'board-with-reply');
+
+  await page.getByTestId('claim-job').click();
+  await page.getByTestId('submit').click();
+  await expectReply(page, '這個差別被排除了');
+  await expect(page.getByTestId('board-reply')).toContainText('雷管工廠');
 
   await page.getByTestId('slot-0').click();
   await page.getByTestId('slot-1').click();
@@ -211,7 +220,7 @@ test('insufficient evidence never softlocks the investigation; Escape closes bot
   await placePair(page, 'E01', 'E08');
   await page.getByTestId('claim-air').click();
   await page.getByTestId('submit').click();
-  await expectReply(page, '另一種解釋');
+  await expectReply(page, '這個差別被排除了');
   await page.getByTestId('claim-water').click();
   await page.getByTestId('submit').click();
   await expectReply(page, '證據撐不住這句話');
@@ -219,6 +228,14 @@ test('insufficient evidence never softlocks the investigation; Escape closes bot
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByTestId('objective')).toBeVisible();
+
+  // 桌面上的「重新開始」要按兩次；中途做別的事會取消
+  await page.getByTestId('restart').click();
+  await expect(page.getByTestId('restart')).toContainText('確定重新開始');
+  await page.getByTestId('spot-hale').click();
+  await expect(page.getByTestId('restart')).toHaveText('重新開始');
+  await expect(page.getByTestId('clue-count')).toHaveText('2 / 4');
+
   await collectDocument(page, 'E02');
   await collectDocument(page, 'E03');
   await expect(page.getByTestId('clue-count')).toHaveText('4 / 4');
@@ -227,7 +244,7 @@ test('insufficient evidence never softlocks the investigation; Escape closes bot
   await page.getByTestId('slot-1').click();
   await placePair(page, 'E02', 'E03');
   await expect(page.getByTestId('claim-water')).toHaveAttribute('aria-pressed', 'true');
-  await finishCase(page);
+  await finishCase(page, true);
 });
 
 test('keyboard only: Tab, Enter, Space and Escape reach and read a scene hotspot', async ({ page }) => {

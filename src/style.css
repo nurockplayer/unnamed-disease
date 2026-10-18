@@ -69,6 +69,16 @@ button:focus-visible,
   color: var(--text);
 }
 
+.ghost.danger {
+  border-color: var(--red);
+  color: #f2b3a8;
+}
+
+.frame {
+  margin: 0 0 0.5rem;
+  line-height: 1.6;
+}
+
 .ghost.small {
   white-space: nowrap;
   font-size: 0.85rem;
@@ -256,6 +266,9 @@ button:focus-visible,
 .scene {
   width: 100%;
   height: auto;
+  /* 矮螢幕時縮小場景，讓對話框留在畫面內（保持 1000:620 比例） */
+  max-width: calc(60vh * 1000 / 620);
+  margin: 0 auto;
   display: block;
   border: 2px solid var(--line);
   border-radius: 6px;
@@ -446,6 +459,10 @@ button:focus-visible,
   background: #5a6b3a;
 }
 
+.v-ruledOut {
+  background: #6b5a2e;
+}
+
 .v-competing {
   background: #3e5671;
 }
@@ -477,9 +494,11 @@ button:focus-visible,
   max-width: 640px;
   width: 100%;
   max-height: calc(100vh - 2rem);
+  --pad-x: 1.6rem;
+  --pad-y: 1.4rem;
   overflow-y: auto;
   border-radius: 6px;
-  padding: 1.4rem 1.6rem;
+  padding: var(--pad-y) var(--pad-x);
 }
 
 .modal.opening {
@@ -495,8 +514,20 @@ button:focus-visible,
   display: flex;
   justify-content: flex-end;
   gap: 0.8rem;
-  margin-top: 1rem;
+  margin: 1rem calc(-1 * var(--pad-x)) calc(-1 * var(--pad-y));
+  padding: 0.8rem var(--pad-x) 1rem;
   flex-wrap: wrap;
+  position: sticky;
+  bottom: calc(-1 * var(--pad-y));
+  border-top: 1px solid rgba(120, 95, 60, 0.35);
+}
+
+.document .modal-actions {
+  background: var(--paper-dark);
+}
+
+.board .modal-actions {
+  background: var(--panel-2);
 }
 
 .document {
@@ -667,9 +698,15 @@ button:focus-visible,
 }
 
 .claims {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
+}
+
+@media (max-width: 520px) {
+  .claims {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .claim {
@@ -679,6 +716,19 @@ button:focus-visible,
   border-radius: 4px;
   padding: 0.5em 0.9em;
   line-height: 1.55;
+}
+
+.claim.out {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(181, 72, 59, 0.7);
+}
+
+.claim small {
+  display: block;
+  font-size: 0.72rem;
+  text-decoration: none;
+  color: #c98a7c;
 }
 
 .claim.on {
@@ -693,6 +743,7 @@ button:focus-visible,
 }
 
 .board-reply {
+  scroll-margin-top: 1rem;
   display: flex;
   gap: 0.9rem;
   margin-top: 1rem;
@@ -771,7 +822,8 @@ button:focus-visible,
   }
 
   .modal {
-    padding: 1.1rem 1rem;
+    --pad-x: 1rem;
+    --pad-y: 1.1rem;
   }
 
   .slots {

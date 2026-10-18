@@ -40,14 +40,14 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '總登記處本週彙整的抄件（至 9 月 2 日止）：Golden Square、Berwick Street、St. Ann’s 三個分區共登記霍亂死者 89 人——其中 79 人死於週五、週六兩天。',
       '9 月 1 日｜Broad Street｜女，38 歲，洗衣婦｜病程約 12 小時',
       '9 月 1 日｜Cambridge Street｜男，6 歲，學童｜病程約 20 小時',
-      '9 月 2 日｜Broad Street｜男，雷管工廠工人｜病程約 9 小時',
+      '9 月 2 日｜Hopkins Street｜男，Broad Street 雷管工廠工人｜病程約 9 小時',
       '9 月 2 日｜Poland Street｜男，45 歲，裁縫｜病程約 1 天',
       '9 月 3 日｜Marshall Street｜女，60 歲，寡婦｜病程約 14 小時',
       '9 月 3 日｜Berwick Street｜男，31 歲，鞋匠｜病程約 18 小時',
       '……（以下略）',
-      '你在頁邊用鉛筆寫了兩行：「地址幾乎都擠在 Broad Street 周圍幾條街。」「翻遍整本，沒有一個是啤酒廠的工人——那間啤酒廠就在 Broad Street 上。」',
+      '你在頁邊用鉛筆寫了兩行：「地址幾乎都擠在 Broad Street 周圍幾條街。」「翻遍整本，找不到一個啤酒廠的工人。啤酒廠明明就在 Broad Street 上？」',
     ],
-    takeaway: '死者集中在 Broad Street 周圍；啤酒廠就在中間，卻沒有一個工人登記死亡。',
+    takeaway: '死者擠在 Broad Street 周圍幾條街；名單上找不到啤酒廠的工人。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
@@ -57,8 +57,13 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       },
       {
         kind: 'HISTORICAL_RECORD',
-        note: '登記中沒有啤酒廠工人死於霍亂（Snow 正是因此去拜訪啤酒廠）。',
+        note: 'Snow 也注意到，登記中沒有啤酒廠工人死於霍亂。',
         source: `${S01}，p.42`,
+      },
+      {
+        kind: 'HISTORICAL_RECORD',
+        note: 'Broad Street 37 號的雷管工廠約 200 名工人中，有 18 人在自己家中死於霍亂。',
+        source: `${S01}，p.43`,
       },
       {
         kind: 'RECONSTRUCTION',
@@ -77,7 +82,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '本廠僱工七十餘人。疫病流行以來，無一人患重症；僅兩人一度身體不適，並不嚴重。',
       '—— Broad Street 啤酒廠 帳房 W. 柯林斯　9 月 5 日',
     ],
-    takeaway: '啤酒廠七十多名工人沒有重症，只有兩人輕微不適——就在疫區正中間。',
+    takeaway: '啤酒廠七十多名工人沒有人重病，只有兩人輕微不適。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
@@ -100,9 +105,9 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '「廠裡配給我們一定份量的麥芽酒。老闆說，我們根本不喝水。」',
       '「街上那個泵？我們從來不去那兒打水。」',
       '廠裡有自己的深井，另外接 New River 公司的供水。',
-      '（自己記一筆：「根本不喝水」是老闆的看法，未必每個人都這樣。比較可靠的是——老闆很確定他們不從街泵取水。）',
+      '（自己記一筆：「根本不喝水」只是老闆的看法。）',
     ],
-    takeaway: '據廠方的說法，啤酒廠的人不從 Broad Street 街泵取水；廠內有深井，也接 New River 的水。',
+    takeaway: '廠裡配麥芽酒；據說工人從不去街泵打水；廠內有深井，也接 New River 的水。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
@@ -146,21 +151,21 @@ export const WINDOW_TEXT = [
   'Broad Street 那頭，還有人提著水桶，在街泵前排隊。',
 ];
 
+export const BOARD_FRAME = '就在疫區正中間，有一群人幾乎沒事。他們和死去的街坊，差別在於——';
+
 export const CLAIMS: Record<ClaimId, Claim> = {
-  air: { id: 'air', text: '逃不過。整區的空氣都壞了，住在附近的人都一樣危險。' },
-  anomaly: { id: 'anomaly', text: '不一定。就在同一區裡，也有一群人幾乎沒有重症。' },
-  water: {
-    id: 'water',
-    text: '住得近不是唯一的差別：啤酒廠的人不用街泵的水——取水來源值得追查。',
-  },
-  beer: { id: 'beer', text: '喝麥芽酒的人不會得霍亂。' },
-  proven: { id: 'proven', text: '已經證實了：Broad Street 的街泵就是病源。' },
+  air: { id: 'air', text: '吸的空氣' },
+  place: { id: 'place', text: '住和做工的地方' },
+  job: { id: 'job', text: '從事的行業' },
+  beer: { id: 'beer', text: '喝麥芽酒' },
+  water: { id: 'water', text: '取水的來源' },
+  luck: { id: 'luck', text: '運氣與體質' },
 };
 
-export const CLAIM_ORDER: ClaimId[] = ['air', 'anomaly', 'water', 'beer', 'proven'];
+export const CLAIM_ORDER: ClaimId[] = ['air', 'place', 'job', 'beer', 'water', 'luck'];
 
 /** 與黑爾先生交談時，依進度給出的提示 */
-export function haleTalk(seenCount: number, anomaly: boolean, air: boolean): string[] {
+export function haleTalk(seenCount: number, anomaly: boolean, failures: number): string[] {
   if (seenCount === 0) {
     return [
       '登記冊、啤酒廠的回信、你的筆記，還有那封請願信，都在桌上。',
@@ -170,27 +175,30 @@ export function haleTalk(seenCount: number, anomaly: boolean, air: boolean): str
   if (seenCount < 2) {
     return ['桌上的東西還沒看完吧？點一下就能讀。讀過的會收進右邊的線索夾，隨時能重看。'];
   }
+  if (failures >= 3) {
+    return [
+      '空氣、街道，他們和街坊都一樣。那他們每天做的事裡，有哪一件和街坊不同？',
+      '你的筆記本上，記了啤酒廠門口那段談話。',
+    ];
+  }
   if (anomaly) {
     return [
       '就算啤酒廠是個例外——為什麼偏偏是他們？',
       '他們和街坊吸的是同一條街的空氣。差別到底在哪裡？',
     ];
   }
-  if (air) {
-    return ['你也同意是空氣的問題。', '……不過，你剛才提到啤酒廠的時候，好像還想說什麼？'];
-  }
   if (seenCount < 4) {
     return [
       '還有東西沒看。',
-      '想好了就打開「推理板」：挑兩份證據，再告訴我你的結論。',
+      '想好了就打開「推理板」：挑兩份證據，告訴我那群人和街坊差在哪裡。',
     ];
   }
-  return ['都看過了？那就打開「推理板」。', '挑兩份證據，告訴我你的結論。'];
+  return ['都看過了？那就打開「推理板」。', '挑兩份證據，告訴我那群人和街坊差在哪裡。'];
 }
 
 export const ENDING: { speaker?: string; text: string }[] = [
   { speaker: HALE, text: '……啤酒廠就在 Broad Street 上。那些工人，和死者吸的是同一條街的空氣。' },
-  { speaker: HALE, text: '差別是，他們不去那個街泵打水。' },
+  { speaker: HALE, text: '你是說……差別在於，他們不去那個街泵打水。' },
   {
     speaker: HALE,
     text: '這證明不了什麼。也許是巧合，也許是那口深井比較乾淨，也許還有別的原因。',
@@ -210,8 +218,8 @@ export const ENDING: { speaker?: string; text: string }[] = [
 
 export const HISTORY_NOTES: string[] = [
   '1854 年人們已知道「霍亂」這個病名；當時沒有定論的，是它如何傳播。',
-  'John Snow 早在 1849 年就已發表霍亂經由水傳播的觀點；1854 年 9 月 3 日晚他檢查了街泵的水，之後逐一查問死者的飲水（S01 pp.39–40）。黑爾先生口中的傳聞是戲劇重建：史料沒有記下他每一天的行程。',
-  '9 月 7 日晚，Snow 向 St. James 教區監護委員會陳述調查結果；9 月 8 日，Broad Street 街泵的把手被移除（S01 p.40）。',
-  '依 Snow 自己的統計，把手移除前，新病例已大幅減少；居民大量出逃也減少了死亡。Snow 自己承認無法單憑時間順序判定拆把手的效果，所以不能說「拆掉把手就立刻終結了疫情」（S01 pp.38, 51–52）。',
-  '主角、黑爾先生、帳房、車夫與請願信皆為虛構；啤酒廠工人的人數、病況與取水方式出自 Snow 對業主 Huggins 先生的記錄（S01 p.42）。',
+  'John Snow 早在 1849 年就已發表霍亂經由水傳播的觀點；1854 年 9 月 3 日晚他檢查了街泵的水，之後逐一查問死者的飲水（Snow 1855, pp.39–40）。黑爾先生口中的傳聞是戲劇重建：史料沒有記下他每一天的行程。',
+  '9 月 7 日晚，Snow 向 St. James 教區監護委員會陳述調查結果；9 月 8 日，Broad Street 街泵的把手被移除（Snow 1855, p.40）。',
+  '依 Snow 自己的統計，把手移除前，新病例已大幅減少；居民大量出逃也減少了死亡。Snow 自己承認無法單憑時間順序判定拆把手的效果，所以不能說「拆掉把手就立刻終結了疫情」（Snow 1855, pp.38, 51–52）。',
+  '主角、黑爾先生、帳房、車夫與請願信皆為虛構；啤酒廠工人的人數、病況與取水方式出自 Snow 對業主 Huggins 先生的記錄（Snow 1855, p.42）。',
 ];

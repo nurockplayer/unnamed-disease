@@ -32,8 +32,9 @@ export function initialState(): State {
     claim: null,
     attempts: [],
     reply: null,
-    flags: { anomaly: false, air: false, windowSeen: false },
+    flags: { anomaly: false, windowSeen: false },
     showSources: false,
+    confirmRestart: false,
   };
 }
 
@@ -41,7 +42,18 @@ export function canSubmit(s: State): boolean {
   return s.slots[0] !== null && s.slots[1] !== null && s.claim !== null;
 }
 
+/** 推理失敗（未成立）的次數，用來讓黑爾先生給更直接的提示 */
+export function failures(s: State): number {
+  return s.attempts.filter((t) => t.verdict !== 'solved' && t.verdict !== 'partial').length;
+}
+
 export function reduce(s: State, a: Action): State {
+  // 「重新開始」需要連按兩次；做了別的事就取消確認
+  if (s.confirmRestart && a.type !== 'restart') s = { ...s, confirmRestart: false };
+  return step(s, a);
+}
+
+function step(s: State, a: Action): State {
   switch (a.type) {
     case 'start':
       return { ...initialState(), phase: 'intro' };
@@ -58,7 +70,9 @@ export function reduce(s: State, a: Action): State {
       return s;
 
     case 'skipIntro':
-      return s.phase === 'intro' ? { ...s, phase: 'desk', introStep: 0 } : s;
+      if (s.phase === 'intro') return { ...s, phase: 'desk', introStep: 0 };
+      if (s.phase === 'ending') return { ...s, introStep: ENDING.length };
+      return s;
 
     case 'read':
       if (s.phase !== 'desk') return s;
@@ -87,6 +101,7 @@ export function reduce(s: State, a: Action): State {
 
     case 'toggleSlot': {
       if (!s.seen.includes(a.id)) return s;
+      s = { ...s, reply: null }; // 換了選擇，舊回應就不再對應
       const [x, y] = s.slots;
       if (x === a.id) return { ...s, slots: [null, y] };
       if (y === a.id) return { ...s, slots: [x, null] };
@@ -97,25 +112,32 @@ export function reduce(s: State, a: Action): State {
     }
 
     case 'pin': {
-      const placed = s.slots.includes(a.id) ? s : reduce(s, { type: 'toggleSlot', id: a.id });
+      const placed = s.slots.includes(a.id) ? s : step(s, { type: 'toggleSlot', id: a.id });
       return { ...placed, reading: null, boardOpen: true };
     }
 
     case 'clearSlot': {
       const slots: State['slots'] = [...s.slots];
+      s = { ...s, reply: null };
       slots[a.index] = null;
       return { ...s, slots };
     }
 
     case 'chooseClaim':
-      return { ...s, claim: s.claim === a.id ? null : a.id };
+      return { ...s, reply: null, claim: s.claim === a.id ? null : a.id };
 
     case 'submit': {
       if (!canSubmit(s)) return s;
       const [x, y] = s.slots as [EvidenceId, EvidenceId];
       const claim = s.claim as ClaimId;
       const reply = evaluate(x, y, claim);
-      const attempts = [...s.attempts, { evidence: [x, y] as [EvidenceId, EvidenceId], claim, verdict: reply.verdict }];
+      const repeat = s.attempts.some(
+        (t) => t.claim === claim && t.evidence.includes(x) && t.evidence.includes(y),
+      );
+      // 同一組合重送不重複計次
+      const attempts = repeat
+        ? s.attempts
+        : [...s.attempts, { evidence: [x, y] as [EvidenceId, EvidenceId], claim, verdict: reply.verdict }];
       if (reply.verdict === 'solved') {
         return { ...s, attempts, reply, boardOpen: false, phase: 'ending', introStep: 0 };
       }
@@ -123,11 +145,7 @@ export function reduce(s: State, a: Action): State {
         ...s,
         attempts,
         reply,
-        flags: {
-          ...s.flags,
-          anomaly: s.flags.anomaly || (claim === 'anomaly' && reply.verdict === 'partial'),
-          air: s.flags.air || reply.verdict === 'competing',
-        },
+        flags: { ...s.flags, anomaly: s.flags.anomaly || reply.verdict === 'partial' },
       };
     }
 
@@ -138,6 +156,7 @@ export function reduce(s: State, a: Action): State {
       return { ...s, showSources: !s.showSources };
 
     case 'restart':
+      if (s.phase === 'desk' && !s.confirmRestart) return { ...s, confirmRestart: true };
       return initialState();
   }
 }

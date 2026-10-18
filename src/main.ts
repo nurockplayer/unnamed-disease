@@ -59,7 +59,7 @@ function draw(prev: State | null = null, action: Action | null = null) {
   }
   target?.focus({ preventScroll: true });
   if (action?.type === 'submit') {
-    root.querySelector('.board-reply')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    root.querySelector('.board-reply')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 }
 
@@ -78,7 +78,6 @@ function actionFrom(el: HTMLElement): Action | null {
     case 'window':
       return { type: 'lookWindow' };
     case 'restart':
-      if (state.phase === 'desk' && !confirm('重新開始？目前的調查進度會清除。')) return null;
       return { type: 'restart' };
     case 'start':
     case 'advance':
