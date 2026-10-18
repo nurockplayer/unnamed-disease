@@ -111,6 +111,24 @@ root.addEventListener('keydown', (ev) => {
 });
 
 document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Tab') {
+    // 對話框開著時，Tab／Shift+Tab 在框內循環
+    const dialog = root.querySelector<HTMLElement>('.modal');
+    if (!dialog) return;
+    const items = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), summary, [tabindex="0"]')];
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    const inside = dialog.contains(document.activeElement);
+    if (ev.shiftKey && (!inside || document.activeElement === first)) {
+      ev.preventDefault();
+      last.focus();
+    } else if (!ev.shiftKey && (!inside || document.activeElement === last)) {
+      ev.preventDefault();
+      first.focus();
+    }
+    return;
+  }
   if (ev.key === 'Escape') {
     if (state.reading) dispatch({ type: 'closeReading' });
     else if (state.boardOpen) dispatch({ type: 'closeBoard' });

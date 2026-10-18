@@ -6,7 +6,7 @@
 
 ## 立即試玩（第一案・第一段，約 5 分鐘）
 
-需求：Node 22+、pnpm。
+需求：Node 22.12+ 或 24+、pnpm。
 
 ```bash
 pnpm install

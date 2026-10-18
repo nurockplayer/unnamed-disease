@@ -292,3 +292,23 @@ test('keyboard focus moves into dialogs, returns to the opener, and lands on fee
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('spot-E03')).toBeFocused();
 });
+
+test('Tab and Shift+Tab stay inside an open dialog', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('start').click();
+  await page.getByTestId('skip').click();
+  await page.getByTestId('spot-E01').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('close-reader')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByTestId('toggle-sources')).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByTestId('close-reader')).toBeFocused();
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press('Tab');
+    const inside = await page.evaluate(
+      () => !!document.activeElement && !!document.querySelector('[data-testid="reader"]')?.contains(document.activeElement),
+    );
+    expect(inside).toBe(true);
+  }
+});

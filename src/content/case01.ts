@@ -38,6 +38,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
     title: '本分區霍亂死亡登記（摘抄）',
     body: [
       '總登記處本週彙整的抄件（至 9 月 2 日止）：Golden Square、Berwick Street、St. Ann’s 三個分區共登記霍亂死者 89 人——其中 79 人死於週五、週六兩天。',
+      '以下是本分區這幾天親手登記的條目（9 月 1 日起，節錄）：',
       '9 月 1 日｜Broad Street｜女，38 歲，洗衣婦｜病程約 12 小時',
       '9 月 1 日｜Cambridge Street｜男，6 歲，學童｜病程約 20 小時',
       '9 月 2 日｜Hopkins Street｜男，Broad Street 雷管工廠工人｜病程約 9 小時',
