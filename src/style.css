@@ -834,3 +834,151 @@ button:focus-visible,
     justify-self: center;
   }
 }
+
+/* ---------- v0.2：章節、比較表 ---------- */
+.title-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.earlier {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.earlier summary {
+  cursor: pointer;
+  margin-bottom: 0.4rem;
+}
+
+.slots.one {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 22rem;
+}
+
+.claims.wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin: 0.4rem 0;
+}
+
+.compare th,
+.compare td {
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+}
+
+.compare thead th {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.compare tbody th {
+  text-align: left;
+  font-weight: 700;
+}
+
+.compare .many {
+  color: #f2b3a8;
+}
+
+.compare .few {
+  color: #b7d3a6;
+}
+
+.compare td.wrong {
+  outline: 2px solid var(--red);
+  outline-offset: -2px;
+}
+
+/* 手機：每個地方一張卡片，格子帶欄名 */
+@media (max-width: 640px) {
+  .compare thead {
+    display: none;
+  }
+
+  .compare,
+  .compare tbody,
+  .compare tr,
+  .compare th,
+  .compare td {
+    display: block;
+    width: 100%;
+  }
+
+  .compare tr {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 0.6rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .compare th,
+  .compare td {
+    border: none;
+    text-align: left;
+    padding: 0.25rem 0;
+  }
+
+  .compare td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .compare td[data-label]::before {
+    content: attr(data-label) '？';
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .compare td[data-label='結果']::before {
+    content: '結果';
+  }
+}
+
+.compare .unknown-row td {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.cell {
+  min-width: 3rem;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.2em 0.6em;
+  font-weight: 700;
+}
+
+.small-note {
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+
+.chain {
+  padding-left: 1.2rem;
+  margin: 0 0 0.6rem;
+}
+
+.chain li {
+  margin-bottom: 0.5rem;
+}
+
+.chain b {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+}

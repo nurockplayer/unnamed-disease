@@ -4,7 +4,10 @@
 
 本專案隸屬於一個正在規劃的跨領域歷史懸疑冒險系列。每篇先讓玩家投入角色、案件與困境，從調查中理解證據、不確定性與歷史，而不是先上科學課。
 
-## 立即試玩（第一案・第一段，約 5 分鐘）
+## 立即試玩（第一案全三段，約 15–20 分鐘）
+
+**線上版：https://nurockplayer.github.io/unnamed-disease/**（main 每次更新自動部署）
+
 
 需求：Node 22.12+、24 或 26+（與 Vite 8／Vitest 5 一致）、pnpm。
 
@@ -16,7 +19,7 @@ pnpm test         # 推理判定單元測試（Vitest）
 pnpm e2e          # 真實 Chromium 走完整流程（Playwright，桌面＋手機尺寸）
 ```
 
-技術：Vite + TypeScript，原生 DOM／SVG／CSS（決策見 [D007](docs/DECISIONS.md)）。遊戲內容與史料出處集中在 [`src/content/case01.ts`](src/content/case01.ts)，推理判定在 [`src/logic/infer.ts`](src/logic/infer.ts)。
+技術：Vite + TypeScript，原生 DOM／SVG／CSS（決策見 [D007](docs/DECISIONS.md)）。證據與史料出處在 [`src/content/evidence.ts`](src/content/evidence.ts)，章節／過場／謎題在 [`src/content/story.ts`](src/content/story.ts)，推理判定在 [`src/logic/puzzles.ts`](src/logic/puzzles.ts)。驗證已部署版本：`E2E_BASE_URL=https://nurockplayer.github.io/unnamed-disease/ pnpm e2e`。
 
 ## 現階段方向（已確認）
 
@@ -29,7 +32,7 @@ pnpm e2e          # 真實 Chromium 走完整流程（Playwright，桌面＋手�
 
 ## 開發進度與交接
 
-**[GitHub Issue #1 — Game Director Handoff](https://github.com/nurockplayer/unnamed-disease/issues/1)** 是 Opus 5.5 每個實質里程碑的正式回報入口；[最新交接摘要](docs/HANDOFF.md) 隨進度同步更新。目前狀態：第一案第一段（紀錄室）可在本機瀏覽器遊玩，見上方「立即試玩」；尚無公開網址與人類盲測。
+**[GitHub Issue #1 — Game Director Handoff](https://github.com/nurockplayer/unnamed-disease/issues/1)** 是 Opus 5.5 每個實質里程碑的正式回報入口；[最新交接摘要](docs/HANDOFF.md) 隨進度同步更新。目前狀態：第一案可線上遊玩（見上方「立即試玩」）；尚無人類盲測。
 
 ## 知識庫導覽
 

@@ -1,22 +1,19 @@
+import { EVIDENCE } from '../content/evidence';
 import {
-  BOARD_FRAME,
-  CLAIMS,
-  CLAIM_ORDER,
-  ENDING,
-  EVIDENCE,
-  EVIDENCE_ORDER,
+  CHAPTERS,
   HALE,
   HISTORY_NOTES,
-  INTRO,
-  OBJECTIVE,
-  OBJECTIVE_AFTER_ANOMALY,
-  QUESTION,
-  WINDOW_TEXT,
+  LOOKS,
+  PUZZLES,
+  SEQUENCES,
+  TABLE_COLUMNS,
+  TABLE_ROWS,
+  closingRemark,
   haleTalk,
-} from '../content/case01';
-import { canSubmit, failures } from '../logic/state';
-import type { ProvenanceKind, State, Verdict } from '../logic/types';
-import { deskScene, halePortrait } from './scene';
+} from '../content/story';
+import { canSubmit, failures, rowKnown, slotCount } from '../logic/state';
+import type { Beat, EvidenceId, ProvenanceKind, PuzzleId, State, Verdict } from '../logic/types';
+import { portrait, sceneFor } from './scene';
 
 const esc = (t: string) =>
   t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -38,90 +35,122 @@ const VERDICT_LABEL: Record<Verdict, string> = {
   insufficient: '證據撐不住這句話',
 };
 
-export function render(s: State): string {
+function verdictLabel(puzzle: PuzzleId, v: Verdict): string {
+  if (puzzle === 'table' && v === 'ruledOut') return '這一欄分不開';
+  if (puzzle === 'table' && v === 'solved') return '找到了';
+  return VERDICT_LABEL[v];
+}
+
+const SKIP_LABEL: Record<State['sequence'], string> = {
+  intro: '跳過開場',
+  to2: '跳過過場',
+  to3: '跳過過場',
+  finale: '跳過，看總結',
+};
+
+export function render(s: State, opts: { hasSave?: boolean } = {}): string {
   switch (s.phase) {
     case 'title':
-      return title();
-    case 'intro':
-      return sequence(INTRO[s.introStep], s.introStep, INTRO.length, '跳過開場');
-    case 'desk':
-      return desk(s);
-    case 'ending':
-      return s.introStep < ENDING.length
-        ? sequence(ENDING[s.introStep], s.introStep, ENDING.length, '跳過，看總結')
-        : summary(s);
+      return title(!!opts.hasSave);
+    case 'sequence': {
+      const beats = SEQUENCES[s.sequence];
+      return sequence(beats[s.step], s.step, beats.length, SKIP_LABEL[s.sequence]);
+    }
+    case 'scene':
+      return scene(s);
+    case 'summary':
+      return summary(s);
   }
 }
 
-function title(): string {
+function title(hasSave: boolean): string {
   return `
 <main class="title-screen">
   <p class="kicker">1854・倫敦 Soho</p>
   <h1>沒有名字的病</h1>
   <p class="subtitle">第一案〈沒有染病的人〉</p>
-  <button class="primary" data-action="start" data-key="start" data-testid="start">開始調查</button>
-  <p class="note">本作涉及疫病與死亡。遊戲中可隨時展開「史料註記」，查看哪些內容出自史料、哪些是虛構。</p>
-  <p class="version">Case 01・第一段　原型 v0.1</p>
+  <div class="title-actions">
+    ${hasSave ? '<button class="primary" data-action="continue" data-key="continue" data-testid="continue">繼續調查</button>' : ''}
+    <button class="${hasSave ? 'ghost' : 'primary'}" data-action="start" data-key="start" data-testid="start">${
+      hasSave ? '從頭開始' : '開始調查'
+    }</button>
+  </div>
+  <p class="note">本作涉及疫病與死亡。遊戲中可隨時展開「史料註記」，查看哪些內容出自史料、哪些是虛構。全程約 15–20 分鐘，進度會自動保存在這個瀏覽器。</p>
+  <p class="version">Case 01　原型 v0.2</p>
 </main>`;
 }
 
-function sequence(
-  beat: { speaker?: string; text: string },
-  step: number,
-  total: number,
-  skipLabel: string,
-): string {
+function speakerBlock(name: string): string {
+  return `<div class="speaker">${portrait(name)}<span>${esc(name)}</span></div>`;
+}
+
+function sequence(beat: Beat, step: number, total: number, skipLabel: string): string {
   return `
 <main class="sequence" data-action="advance" data-testid="sequence">
   <div class="beat ${beat.speaker ? 'spoken' : 'narration'}" aria-live="polite">
-    ${beat.speaker ? `<div class="speaker">${halePortrait()}<span>${esc(beat.speaker)}</span></div>` : ''}
+    ${beat.speaker ? speakerBlock(beat.speaker) : ''}
     <p data-testid="beat-text">${beat.speaker ? '「' : ''}${lines(beat.text)}${beat.speaker ? '」' : ''}</p>
   </div>
   <div class="sequence-controls">
     <span class="progress">${step + 1} / ${total}</span>
     <button class="primary" data-action="advance" data-key="advance" data-testid="advance">繼續 ▸</button>
-    <button class="ghost" data-action="skipIntro" data-testid="skip">${skipLabel}</button>
+    <button class="ghost" data-action="skip" data-testid="skip">${skipLabel}</button>
   </div>
 </main>`;
 }
 
-function desk(s: State): string {
-  const objective = s.flags.anomaly ? OBJECTIVE_AFTER_ANOMALY : OBJECTIVE;
+function objectiveOf(s: State): string {
+  if (s.puzzle === 'brewery' && s.anomaly) return '啤酒廠的人和街坊差在哪裡？用證據回答黑爾先生。';
+  return PUZZLES[s.puzzle].objective;
+}
+
+function scene(s: State): string {
+  const chapter = CHAPTERS[s.chapter];
   // 開著文件或推理板時，背景不可聚焦，鍵盤焦點留在對話框內
   const inert = s.reading || s.boardOpen ? ' inert' : '';
+  const here = chapter.evidence;
+  const earlier = s.seen.filter((id) => !here.includes(id));
+  const seenHere = here.filter((id) => s.seen.includes(id)).length;
   return `
 <div class="desk-layout">
   <header class="topbar"${inert}>
     <div>
-      <span class="case">第一案〈沒有染病的人〉・紀錄室</span>
-      <p class="objective" data-testid="objective"><b>目標</b>${esc(objective)}</p>
+      <span class="case" data-testid="chapter">第一案〈沒有染病的人〉・${esc(chapter.label)}</span>
+      <p class="objective" data-testid="objective"><b>目標</b>${esc(objectiveOf(s))}</p>
     </div>
     <button class="ghost small${s.confirmRestart ? ' danger' : ''}" data-action="restart" data-key="restart-desk"
             data-testid="restart">${s.confirmRestart ? '確定重新開始？再按一次' : '重新開始'}</button>
   </header>
 
   <section class="stage"${inert}>
-    ${deskScene(s.seen)}
-    <p class="stage-hint">點擊桌上的文件閱讀；點黑爾先生與他說話；窗外也能看看。</p>
+    ${sceneFor(s.chapter, s.seen)}
+    <p class="stage-hint">${esc(chapter.hint)}</p>
   </section>
 
   <aside class="casefile" aria-label="線索夾"${inert}>
-    <h2>線索夾 <span data-testid="clue-count">${s.seen.length} / ${EVIDENCE_ORDER.length}</span></h2>
+    <h2>線索夾 <span data-testid="clue-count">${seenHere} / ${here.length}</span></h2>
     <ul>
-      ${EVIDENCE_ORDER.map((id) => {
-        const e = EVIDENCE[id];
-        return s.seen.includes(id)
-          ? `<li><button class="clue" data-action="read" data-id="${id}" data-key="clue-${id}" data-testid="clue-${id}">
-               <b>${esc(e.title)}</b><span>${esc(e.takeaway)}</span></button></li>`
-          : `<li class="unknown">？？？<span>桌上還有東西沒讀</span></li>`;
-      }).join('')}
+      ${here
+        .map((id) =>
+          s.seen.includes(id)
+            ? clueButton(id)
+            : `<li class="unknown">？？？<span>${s.chapter === 2 ? '街上還有地方沒問' : '桌上還有東西沒讀'}</span></li>`,
+        )
+        .join('')}
     </ul>
+    ${
+      earlier.length
+        ? `<details class="earlier"><summary>先前的線索（${earlier.length}）</summary><ul>${earlier
+            .map(clueButton)
+            .join('')}</ul></details>`
+        : ''
+    }
     <button class="primary board-btn" data-action="openBoard" data-key="openBoard" data-testid="open-board">
       打開推理板</button>
   </aside>
 
   <section class="dialogue" aria-live="polite" data-testid="dialogue"${inert}>
-    ${dialogueContent(s)}
+    ${dialogueContent(s, seenHere, here.length)}
   </section>
 
   ${s.reading ? reader(s) : ''}
@@ -129,22 +158,35 @@ function desk(s: State): string {
 </div>`;
 }
 
-function dialogueContent(s: State): string {
-  if (s.reply) {
-    return `
-    <div class="speaker">${halePortrait()}<span>${HALE}</span></div>
+function clueButton(id: EvidenceId): string {
+  const e = EVIDENCE[id];
+  return `<li><button class="clue" data-action="read" data-id="${id}" data-key="clue-${id}" data-testid="clue-${id}">
+    <b>${esc(e.title)}</b><span>${esc(e.takeaway)}</span></button></li>`;
+}
+
+function replyBlock(s: State): string {
+  const r = s.reply!;
+  // 回應一律由黑爾先生說
+  return `${speakerBlock(HALE)}
     <div class="dialogue-body">
-      <span class="verdict v-${s.reply.verdict}" data-testid="verdict">${VERDICT_LABEL[s.reply.verdict]}</span>
-      ${s.reply.lines.map((l) => `<p>「${lines(l)}」</p>`).join('')}
+      <span class="verdict v-${r.verdict}" data-testid="verdict">${verdictLabel(lastPuzzle(s), r.verdict)}</span>
+      ${r.lines.map((l) => `<p>「${lines(l)}」</p>`).join('')}
     </div>`;
+}
+
+/** 回應所屬的謎題（成立後 s.puzzle 已換到下一題） */
+function lastPuzzle(s: State): PuzzleId {
+  return s.attempts.length ? s.attempts[s.attempts.length - 1].puzzle : s.puzzle;
+}
+
+function dialogueContent(s: State, seenHere: number, totalHere: number): string {
+  if (s.reply) return replyBlock(s);
+  if (s.look) {
+    return `<div class="dialogue-body narration">${(LOOKS[s.look] ?? []).map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
   }
-  if (s.flags.windowSeen) {
-    return `<div class="dialogue-body narration">${WINDOW_TEXT.map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
-  }
-  return `
-    <div class="speaker">${halePortrait()}<span>${HALE}</span></div>
+  return `${speakerBlock(HALE)}
     <div class="dialogue-body">
-      ${haleTalk(s.seen.length, s.flags.anomaly, failures(s))
+      ${haleTalk(s.puzzle, seenHere, totalHere, s.anomaly, failures(s))
         .map((l) => `<p>「${esc(l)}」</p>`)
         .join('')}
     </div>`;
@@ -152,6 +194,7 @@ function dialogueContent(s: State): string {
 
 function reader(s: State): string {
   const e = EVIDENCE[s.reading!];
+  const canPin = slotCount(s) > 0;
   return `
 <div class="modal-backdrop" data-action="closeReading">
   <article class="modal document" role="dialog" aria-modal="true" aria-labelledby="doc-title"
@@ -173,7 +216,11 @@ function reader(s: State): string {
         : ''
     }
     <div class="modal-actions">
-      <button class="ghost" data-action="pin" data-id="${e.id}" data-key="pin" data-testid="pin">放上推理板</button>
+      ${
+        canPin
+          ? `<button class="ghost" data-action="pin" data-id="${e.id}" data-key="pin" data-testid="pin">放上推理板</button>`
+          : ''
+      }
       <button class="primary" data-action="closeReading" data-key="closeReading" data-testid="close-reader">關閉</button>
     </div>
   </article>
@@ -181,103 +228,146 @@ function reader(s: State): string {
 }
 
 function board(s: State): string {
-  const slot = (i: 0 | 1) => {
-    const id = s.slots[i];
-    return id
-      ? `<button class="slot filled" data-action="clearSlot" data-index="${i}" data-key="slot-${i}" data-testid="slot-${i}">
-           <small>證據${i === 0 ? '一' : '二'}</small><b>${esc(EVIDENCE[id].title)}</b><em>點一下移除</em></button>`
-      : `<div class="slot empty" data-testid="slot-${i}"><small>證據${i === 0 ? '一' : '二'}</small>從下方線索選一份</div>`;
-  };
+  const p = PUZZLES[s.puzzle];
+  const n = slotCount(s);
   const ready = canSubmit(s);
+  const ruledOut = new Set(
+    s.attempts.filter((t) => t.puzzle === s.puzzle && t.verdict === 'ruledOut').map((t) => t.option),
+  );
   return `
 <div class="modal-backdrop" data-action="closeBoard">
   <section class="modal board" role="dialog" aria-modal="true" aria-labelledby="board-title"
            data-testid="board" data-stop>
     <h2 id="board-title">推理板</h2>
-    <p class="question">黑爾先生的問題：<b>${esc(QUESTION)}</b></p>
+    <p class="question" data-testid="question">${esc(p.asker)}：<b>${esc(p.question)}</b></p>
 
-    <div class="slots">${slot(0)}<span class="plus">＋</span>${slot(1)}</div>
+    ${p.kind === 'table' ? table(s) : ''}
+    ${n > 0 ? evidencePicker(s, n as 1 | 2) : ''}
 
-    <h3>線索（選兩份；已選兩份時，再選會替換證據二）</h3>
+    <h3>${p.kind === 'table' ? '哪一欄能把結果分開？' : '你的判斷'}</h3>
+    ${p.kind === 'table' ? '' : `<p class="frame">${esc(p.frame)}</p>`}
+    <div class="claims${p.kind === 'none' || p.kind === 'single' ? ' wide' : ''}">
+      ${p.options
+        .map((o) => {
+          const on = s.option === o.id;
+          const out = ruledOut.has(o.id);
+          return `<button class="claim${on ? ' on' : ''}${out ? ' out' : ''}" aria-pressed="${on}" data-action="chooseOption"
+                    data-id="${o.id}" data-key="claim-${o.id}" data-testid="claim-${o.id}">${esc(o.text)}${
+                      out ? '<small>已排除</small>' : ''
+                    }</button>`;
+        })
+        .join('')}
+    </div>
+
+    ${
+      s.reply
+        ? `<div class="board-reply" data-testid="board-reply" role="status" tabindex="-1">${replyBlock(s)}</div>`
+        : ''
+    }
+
+    ${attemptsList(s)}
+    <div class="modal-actions">
+      <button class="ghost" data-action="closeBoard" data-key="closeBoard" data-testid="close-board">回到${
+        s.chapter === 2 ? '街上' : '桌前'
+      }</button>
+      <button class="primary" data-action="submit" data-key="submit" data-testid="submit" ${ready ? '' : 'disabled'}>
+        提出</button>
+    </div>
+  </section>
+</div>`;
+}
+
+function evidencePicker(s: State, n: 1 | 2): string {
+  const slot = (i: 0 | 1) => {
+    const id = s.slots[i];
+    const name = n === 1 ? '證據' : `證據${i === 0 ? '一' : '二'}`;
+    return id
+      ? `<button class="slot filled" data-action="clearSlot" data-index="${i}" data-key="slot-${i}" data-testid="slot-${i}">
+           <small>${name}</small><b>${esc(EVIDENCE[id].title)}</b><em>點一下移除</em></button>`
+      : `<div class="slot empty" data-testid="slot-${i}"><small>${name}</small>從下方線索選一份</div>`;
+  };
+  return `
+    <div class="slots${n === 1 ? ' one' : ''}">${slot(0)}${n === 2 ? `<span class="plus">＋</span>${slot(1)}` : ''}</div>
+    <h3>線索（選${n === 1 ? '一' : '兩'}份${n === 2 ? '；已選兩份時，再選會替換證據二' : '；再選會替換'}）</h3>
     ${
       s.seen.length === 0
-        ? '<p class="empty-note">還沒有線索。先讀讀桌上的文件。</p>'
-        : `${s.seen.length < 2 ? '<p class="empty-note">至少需要兩份線索，桌上還有東西沒讀。</p>' : ''}<div class="chips">${EVIDENCE_ORDER.filter((id) => s.seen.includes(id))
+        ? '<p class="empty-note">還沒有線索。先調查看看。</p>'
+        : `${s.seen.length < n ? '<p class="empty-note">線索還不夠，先去調查。</p>' : ''}<div class="chips">${s.seen
             .map((id) => {
               const on = s.slots.includes(id);
               return `<button class="chip${on ? ' on' : ''}" aria-pressed="${on}" data-action="toggleSlot"
                         data-id="${id}" data-key="chip-${id}" data-testid="chip-${id}">${esc(EVIDENCE[id].title)}</button>`;
             })
             .join('')}</div>`
-    }
+    }`;
+}
 
-    <h3>你的判斷</h3>
-    <p class="frame">${esc(BOARD_FRAME)}</p>
-    <div class="claims">
-      ${CLAIM_ORDER.map((id) => {
-        const on = s.claim === id;
-        const out = s.attempts.some((t) => t.claim === id && t.verdict === 'ruledOut');
-        return `<button class="claim${on ? ' on' : ''}${out ? ' out' : ''}" aria-pressed="${on}" data-action="chooseClaim"
-                  data-id="${id}" data-key="claim-${id}" data-testid="claim-${id}">${esc(CLAIMS[id].text)}${
-                    out ? '<small>已排除</small>' : ''
-                  }</button>`;
+function table(s: State): string {
+  const wrong = new Set(s.reply?.wrongCells ?? []);
+  const missing = TABLE_ROWS.filter((r) => !rowKnown(s, r.id)).length;
+  const show = (v: boolean | null) => (v === null ? '？' : v ? '是' : '否');
+  return `
+    <p class="frame">${esc(PUZZLES.table.frame)}</p>
+    ${missing ? `<p class="empty-note" data-testid="table-missing">還有 ${missing} 個地方沒調查清楚，表上那幾列先空著。</p>` : ''}
+    <table class="compare" data-testid="compare">
+      <thead><tr><th>地方</th>${TABLE_COLUMNS.map((c) => `<th>${esc(c.label)}？</th>`).join('')}<th>結果</th></tr></thead>
+      <tbody>
+      ${TABLE_ROWS.map((r) => {
+        if (!rowKnown(s, r.id))
+          return `<tr class="unknown-row"><th>${esc(r.label)}</th><td colspan="${TABLE_COLUMNS.length + 1}">還沒調查</td></tr>`;
+        return `<tr>
+          <th>${esc(r.label)}</th>
+          ${TABLE_COLUMNS.map((c) => {
+            const v = s.cells[r.id][c.id];
+            const bad = wrong.has(`${r.id}:${c.id}`);
+            return `<td data-label="${esc(c.label)}"${bad ? ' class="wrong"' : ''}><button class="cell" data-action="cycleCell"
+                 data-id="${r.id}" data-col="${c.id}" data-key="cell-${r.id}-${c.id}" data-testid="cell-${r.id}-${c.id}"
+                 aria-label="${esc(r.label)}：${esc(c.label)}？目前${v === null ? '未填' : show(v)}">${show(v)}</button></td>`;
+          }).join('')}
+          <td data-label="結果" class="${r.many ? 'many' : 'few'}">${esc(r.result)}</td>
+        </tr>`;
       }).join('')}
-    </div>
+      </tbody>
+    </table>
+    <p class="muted small-note">點格子切換：？ → 是 → 否。</p>`;
+}
 
-    ${
-      s.reply
-        ? `<div class="board-reply" data-testid="board-reply" role="status" tabindex="-1">
-             <div class="speaker">${halePortrait()}<span>${HALE}</span></div>
-             <div><span class="verdict v-${s.reply.verdict}">${VERDICT_LABEL[s.reply.verdict]}</span>
-             ${s.reply.lines.map((l) => `<p>「${lines(l)}」</p>`).join('')}</div>
-           </div>`
-        : ''
-    }
-
-    <div class="modal-actions">
-      <button class="ghost" data-action="closeBoard" data-key="closeBoard" data-testid="close-board">回到桌前</button>
-      <button class="primary" data-action="submit" data-key="submit" data-testid="submit" ${ready ? '' : 'disabled'}>
-        向黑爾先生提出</button>
-    </div>
-    ${
-      s.attempts.length
-        ? `<details class="attempts"><summary>已提出過 ${s.attempts.length} 次</summary><ol>${s.attempts
-            .map(
-              (a) =>
-                `<li>${esc(EVIDENCE[a.evidence[0]].object)}＋${esc(EVIDENCE[a.evidence[1]].object)} → 差別在於「${esc(
-                  CLAIMS[a.claim].text,
-                )}」<em>（${VERDICT_LABEL[a.verdict]}）</em></li>`,
-            )
-            .join('')}</ol></details>`
-        : ''
-    }
-  </section>
-</div>`;
+function attemptsList(s: State): string {
+  const mine = s.attempts.filter((t) => t.puzzle === s.puzzle);
+  if (!mine.length) return '';
+  const p = PUZZLES[s.puzzle];
+  return `<details class="attempts"><summary>這一題已提出過 ${mine.length} 次</summary><ol>${mine
+    .map((a) => {
+      const opt = p.options.find((o) => o.id === a.option)?.text ?? '';
+      const ev = a.evidence.map((id) => EVIDENCE[id].object).join('＋');
+      return `<li>${ev ? `${esc(ev)} → ` : ''}「${esc(opt)}」<em>（${verdictLabel(a.puzzle, a.verdict)}）</em></li>`;
+    })
+    .join('')}</ol></details>`;
 }
 
 function summary(s: State): string {
-  const final = s.attempts[s.attempts.length - 1];
+  const solved = s.attempts.filter((t) => t.verdict === 'solved');
+  const overreaches = s.attempts.filter((t) => t.verdict === 'overreach').length;
+  const ruledOut = s.attempts.filter((t) => t.verdict === 'ruledOut');
+  const ruledTexts = [
+    ...new Set(ruledOut.map((t) => PUZZLES[t.puzzle].options.find((o) => o.id === t.option)?.text ?? '')),
+  ].filter(Boolean);
   return `
 <main class="summary" data-testid="summary">
   <p class="kicker">第一案〈沒有染病的人〉</p>
-  <h1>第一段・完</h1>
+  <h1>結案</h1>
   <section>
-    <h2>你的推論</h2>
-    <p class="final-claim">「同一條街、同樣的空氣，啤酒廠的人卻幾乎沒事。差別可能在於：${esc(
-      CLAIMS[final.claim].text,
-    )}。」</p>
-    <p>依據：${esc(EVIDENCE[final.evidence[0]].title)}、${esc(EVIDENCE[final.evidence[1]].title)}</p>
-    <p class="muted">向黑爾先生提出了 ${s.attempts.length} 次${
-      s.attempts.some((t) => t.verdict === 'ruledOut')
-        ? `，途中排除了：${[...new Set(s.attempts.filter((t) => t.verdict === 'ruledOut').map((t) => CLAIMS[t.claim].text))]
-            .map(esc)
-            .join('、')}`
-        : ''
-    }。這不是定論——只是一條值得追下去的線。</p>
+    <h2>你一路的推理</h2>
+    <ol class="chain">${solved
+      .map((t) => `<li><b>${esc(chapterOf(t.puzzle))}</b>${esc(PUZZLES[t.puzzle].summary(t.option))}</li>`)
+      .join('')}</ol>
+    <p class="muted">共提出 ${s.attempts.length} 次推論${
+      ruledTexts.length ? `；途中被證據排除的：${ruledTexts.map(esc).join('、')}` : ''
+    }。這些都不是定論——是在資訊不完整時，盡量不說錯話的判斷。</p>
   </section>
   <section>
-    <h2>下一段</h2>
-    <p>Poland Street 濟貧院：五百多人，四面疫區。他們喝的是什麼水？<span class="muted">（製作中）</span></p>
+    <h2>黑爾先生</h2>
+    <p class="final-claim" data-testid="closing">「${esc(closingRemark(overreaches))}」</p>
   </section>
   <section class="history">
     <h2>史實與虛構</h2>
@@ -286,4 +376,9 @@ function summary(s: State): string {
   </section>
   <button class="primary" data-action="restart" data-key="restart" data-testid="play-again">重新開始</button>
 </main>`;
+}
+
+function chapterOf(p: PuzzleId): string {
+  const id = (Object.keys(CHAPTERS) as unknown as (1 | 2 | 3)[]).find((c) => CHAPTERS[c].puzzles.includes(p));
+  return id ? `${CHAPTERS[id].label}：` : '';
 }
