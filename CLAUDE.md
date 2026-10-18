@@ -6,4 +6,4 @@
 
 唯一已選的玩法先後：**A 定點調查與主動推理 → 試玩驗證後再考慮 C 演出**。其他細節是可調整提案。
 
-重大決策與進度記在 [DECISIONS](docs/DECISIONS.md)、[HANDOFF](docs/HANDOFF.md)。優先交付實際可玩的版本，遵守史實／虛構界線。
+每完成一個**可驗收里程碑**，以及停止或切換 session 前，**由你直接在 [GitHub Handoff Issue #1](https://github.com/nurockplayer/unnamed-disease/issues/1) 留下交接留言**（完成內容、真實版本／可玩方式、驗證、缺口、下一步）；不需要每個 commit 都留言。同步更新 [HANDOFF](docs/HANDOFF.md) 的最新狀態，重大取捨寫入 [DECISIONS](docs/DECISIONS.md)。合併後重新確認 main 與實際遊玩結果再回報。優先交付可玩的版本，遵守史實／虛構界線。

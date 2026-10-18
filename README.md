@@ -27,6 +27,10 @@ pnpm e2e          # 真實 Chromium 走完整流程（Playwright，桌面＋手�
 - Opus 擔任 Game Director，有設計與工程取捨權；Sol/Codex 可協作。**Godot 或網頁技術由 Opus 5.5 自行評估並決定**；不預先指定引擎、語言或套件管理器。
 - 重要史實有來源，戲劇重建與純虛構需標示；不可因懸疑效果扭曲史實。
 
+## 開發進度與交接
+
+**[GitHub Issue #1 — Game Director Handoff](https://github.com/nurockplayer/unnamed-disease/issues/1)** 是 Opus 5.5 每個實質里程碑的正式回報入口；[最新交接摘要](docs/HANDOFF.md) 隨進度同步更新。目前狀態：第一案第一段（紀錄室）可在本機瀏覽器遊玩，見上方「立即試玩」；尚無公開網址與人類盲測。
+
 ## 知識庫導覽
 
 | 文件 | 用途 |
