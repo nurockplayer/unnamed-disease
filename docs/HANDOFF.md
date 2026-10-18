@@ -1,6 +1,18 @@
 # Opus Game Director Handoff
 
-更新：2026-10-19 JST　｜　狀態：**文件已提交；尚未宣稱原型開始／完成**。
+更新：2026-10-19 JST　｜　狀態：**參考文件與 GitHub Handoff Issue 已建立；尚未宣稱原型開始／完成**。
+
+## GitHub Handoff 唯一回報入口
+
+**[Issue #1 — Game Director Handoff](https://github.com/nurockplayer/unnamed-disease/issues/1)**。Opus 5.5 開工後，應**自己**在此 Issue 留言，作為 Owner 可直接查看的正式進度與接續紀錄。不要只把結果寫在聊天或未提交的本機文件。
+
+- **首次接手**：回報引擎／執行平台選型（可先標 provisional）、首個可玩的切片和分工。
+- **每個有實質完成品的里程碑**：報告已完成範圍、commit/PR、怎麼玩、實際驗證結果與未完成項目。**不必逐 commit 留言**。
+- **停止／轉交／重開 session 前**：留下可直接續做的 Handoff 並同步更新本文件；新 session 先讀 live GitHub Issue、main、此文件，再開始動工。
+- **每次 merge 後**：驗證合併後的 main 和遊戲實際執行流程，再回報；單有 CI 綠燈不能標為 Gameplay PASS。
+- **阻塞時**：如實報告問題與替代方案；能推進的工作繼續做。
+
+建議每則留言保持簡短：`狀態、做到哪裡、版本／連結、如何玩、測試／試玩證據、風險與阻礙、接下來誰做什麼`。**尚未可玩就寫尚未可玩，不得捏造建置或測試結果。**
 
 ## 接手時先讀（約 5–10 分鐘）
 
@@ -35,7 +47,7 @@
 - 獨立 QA：不看設計文件，在實際運行環境走完充分／不充分推論兩條路。
 - **Godot vs Web、具體引擎與工具鏈由 Opus 決定**；如果選 Web，套件管理器也由 Opus 自行選擇。保持 MVP，勿為一款 15 分鐘的推理小品先建通用引擎。
 - 重要工程／遊戲取捨，寫入 [DECISIONS.md](DECISIONS.md)；每個階段更新此文件的實際狀態與下一步。
-- 每次完成實質階段，在 GitHub 留下 commit、工作日誌、可重現執行步驟；若 merge 後開新 session，先重新讀 live GitHub 與 handoff，再延續工作。
+- 每次實質里程碑由 Opus 在 [GitHub Handoff Issue #1](https://github.com/nurockplayer/unnamed-disease/issues/1) 留正式交接留言（引用真實 commit、執行方式與驗證），並更新本文件。重開 session 前先讀最新 GitHub Issue/main/handoff。
 
 ## 完成與阻塞的判準
 
