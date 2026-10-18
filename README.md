@@ -13,6 +13,10 @@
 - Opus 擔任 Game Director，有設計與工程取捨權；Sol/Codex 可協作。**Godot 或網頁技術由 Opus 5.5 自行評估並決定**；不預先指定引擎、語言或套件管理器。
 - 重要史實有來源，戲劇重建與純虛構需標示；不可因懸疑效果扭曲史實。
 
+## 開發進度與交接
+
+**[GitHub Issue #1 — Game Director Handoff](https://github.com/nurockplayer/unnamed-disease/issues/1)** 是 Opus 5.5 每個實質里程碑的正式回報入口；[最新交接摘要](docs/HANDOFF.md) 隨進度同步更新。尚未開始實作／完成試玩，不能因已有文件就聲稱已有可玩版本。
+
 ## 知識庫導覽
 
 | 文件 | 用途 |
