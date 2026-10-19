@@ -164,12 +164,13 @@ function clueButton(id: EvidenceId): string {
     <b>${esc(e.title)}</b><span>${esc(e.takeaway)}</span></button></li>`;
 }
 
-function replyBlock(s: State): string {
+/** testid 只放在桌面對話框那一份，避免推理板開著時出現兩個相同 testid */
+function replyBlock(s: State, inBoard = false): string {
   const r = s.reply!;
   // 回應一律由黑爾先生說
   return `${speakerBlock(HALE)}
     <div class="dialogue-body">
-      <span class="verdict v-${r.verdict}" data-testid="verdict">${verdictLabel(lastPuzzle(s), r.verdict)}</span>
+      <span class="verdict v-${r.verdict}"${inBoard ? '' : ' data-testid="verdict"'}>${verdictLabel(lastPuzzle(s), r.verdict)}</span>
       ${r.lines.map((l) => `<p>「${lines(l)}」</p>`).join('')}
     </div>`;
 }
@@ -261,7 +262,7 @@ function board(s: State): string {
 
     ${
       s.reply
-        ? `<div class="board-reply" data-testid="board-reply" role="status" tabindex="-1">${replyBlock(s)}</div>`
+        ? `<div class="board-reply" data-testid="board-reply" role="status" tabindex="-1">${replyBlock(s, true)}</div>`
         : ''
     }
 
