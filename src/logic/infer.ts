@@ -1,10 +1,10 @@
-import type { ClaimId, EvidenceId, Response } from './types';
+import type { EvidenceId, Response } from './types';
 
 /**
- * 判定一次推論：兩份證據 + 「兩群人的差別在於＿＿」。
+ * 第一段：兩份證據 + 「兩群人的差別在於＿＿」。
  * 回應刻意不說出正解：只排除站不住的差別，或指出還缺哪一類證據。
  */
-export function evaluate(a: EvidenceId, b: EvidenceId, claim: ClaimId): Response {
+export function evaluateBrewery(a: EvidenceId, b: EvidenceId, claim: string): Response {
   const has = (id: EvidenceId) => a === id || b === id;
   // 「這群人幾乎沒事」需要證據：帳房回信，或登記冊上找不到啤酒廠工人
   const spared = has('E02') || has('E01');
@@ -55,7 +55,9 @@ export function evaluate(a: EvidenceId, b: EvidenceId, claim: ClaimId): Response
           lines: [
             `${what}？啤酒廠就在 Broad Street 上，四周的房子都有死者。`,
             '這正是他們和街坊「一樣」的地方，不是差別。',
-            '……等等。你這不就是在說，光靠住在哪裡，解釋不了誰會病倒？',
+            claim === 'air'
+              ? '……空氣他們也吸了。那壞空氣，就不是全部的答案。'
+              : '……等等。你這不就是在說，光靠住在哪裡，解釋不了誰會病倒？',
           ],
         };
       }
@@ -90,7 +92,7 @@ export function evaluate(a: EvidenceId, b: EvidenceId, claim: ClaimId): Response
           verdict: 'overreach',
           lines: [
             '筆記上寫的是：老闆「認為」他們不喝水。那是老闆的看法。',
-            '就算他們真的喝酒——你能說的，也只是：他們說自己從不去街泵打水。',
+            '喝酒能不能擋病？你的筆記上，一個字也沒寫。',
             '這話要是傳出去，街坊會以為喝酒就能保命——那是要出人命的。',
           ],
         };
@@ -108,9 +110,11 @@ export function evaluate(a: EvidenceId, b: EvidenceId, claim: ClaimId): Response
           spared
             ? '一整間啤酒廠的人，在死了這麼多人的街上，一起走運？'
             : '運氣？那你得先找到一群「運氣好」的人。',
-          '要是說「運氣」，那就什麼都不用查了。再看看你的筆記。',
+          '要是說「運氣」，那就什麼都不用查了。',
         ],
       };
     }
+    default:
+      return { verdict: 'insufficient', lines: ['你想說什麼？'] };
   }
 }

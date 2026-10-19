@@ -1,6 +1,23 @@
-export type EvidenceId = 'E01' | 'E02' | 'E03' | 'E08';
-/** 推理板上「兩群人的差別在於＿＿」的選項 */
-export type ClaimId = 'air' | 'place' | 'job' | 'beer' | 'water' | 'luck';
+export type EvidenceId =
+  | 'E01'
+  | 'E02'
+  | 'E03'
+  | 'E08'
+  | 'E04'
+  | 'E05'
+  | 'E09'
+  | 'E10'
+  | 'E06'
+  | 'E06b'
+  | 'E12';
+
+export type ChapterId = 1 | 2 | 3;
+export type PuzzleId = 'brewery' | 'table' | 'neighbour' | 'hampstead' | 'handle';
+export type SequenceId = 'intro' | 'to2' | 'to3' | 'finale';
+
+/** 比較表的列與欄 */
+export type RowId = 'brewery' | 'workhouse' | 'capworks' | 'coffee';
+export type ColumnId = 'zone' | 'factory' | 'crowd' | 'pump';
 
 /** 史實／重建／虛構標記，對應 docs/PROJECT_CONTEXT.md 的標示規則 */
 export type ProvenanceKind = 'HISTORICAL_RECORD' | 'RECONSTRUCTION' | 'FICTION' | 'DISPUTED';
@@ -13,7 +30,7 @@ export interface Provenance {
 
 export interface Evidence {
   id: EvidenceId;
-  /** 桌上物件名稱 */
+  /** 場景物件名稱 */
   object: string;
   title: string;
   /** 文件本文（每段一個元素） */
@@ -23,9 +40,8 @@ export interface Evidence {
   provenance: Provenance[];
 }
 
-export interface Claim {
-  id: ClaimId;
-  /** 推理板上的短選項 */
+export interface Option {
+  id: string;
   text: string;
 }
 
@@ -34,31 +50,46 @@ export type Verdict = 'solved' | 'partial' | 'ruledOut' | 'competing' | 'overrea
 export interface Response {
   verdict: Verdict;
   lines: string[];
+  /** 表格題：填錯的格子，格式為 `${RowId}:${ColumnId}` */
+  wrongCells?: string[];
 }
 
 export interface Attempt {
-  evidence: [EvidenceId, EvidenceId];
-  claim: ClaimId;
+  puzzle: PuzzleId;
+  evidence: EvidenceId[];
+  option: string;
   verdict: Verdict;
 }
 
-export type Phase = 'title' | 'intro' | 'desk' | 'ending';
+export interface Beat {
+  speaker?: string;
+  text: string;
+}
+
+export type Phase = 'title' | 'sequence' | 'scene' | 'summary';
 
 export interface State {
   phase: Phase;
-  introStep: number;
+  sequence: SequenceId;
+  step: number;
+  chapter: ChapterId;
+  puzzle: PuzzleId;
   /** 依照發現順序 */
   seen: EvidenceId[];
   /** 正在閱讀的證據 */
   reading: EvidenceId | null;
   boardOpen: boolean;
   slots: [EvidenceId | null, EvidenceId | null];
-  claim: ClaimId | null;
+  option: string | null;
+  /** 比較表：玩家依證據填的格子 */
+  cells: Record<RowId, Record<ColumnId, boolean | null>>;
   attempts: Attempt[];
   /** NPC 最新回應；null 時顯示一般對話 */
   reply: Response | null;
-  flags: { anomaly: boolean; windowSeen: boolean };
+  /** 正在看的場景細節（窗外、街泵…） */
+  look: string | null;
+  anomaly: boolean;
   showSources: boolean;
-  /** 桌面上按過一次「重新開始」，等待第二次確認 */
+  /** 場景中按過一次「重新開始」，等待第二次確認 */
   confirmRestart: boolean;
 }
