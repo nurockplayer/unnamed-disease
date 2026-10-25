@@ -155,14 +155,15 @@ export const PUZZLES: Record<PuzzleId, Puzzle> = {
     objective: '到濟貧院、雷管工廠和咖啡館打聽，填好比較表：哪一欄能把死得多和死得少的地方分開？',
     question: '四個地方都在疫區裡。哪一欄，能把「死得多」和「死得少」分開？',
     asker: HALE,
-    frame: '依你問到的話，把表填完，再選出能把結果分開的那一欄。',
+    frame: '照證詞填完四欄，再選一個能把表上結果分開的條件。「有死亡通報」由右邊的紀錄列出，不用另填。',
     options: [
       { id: 'zone', text: '在疫區裡' },
       { id: 'factory', text: '是工廠' },
       { id: 'crowd', text: '幾十人以上同住或共事' },
+      { id: 'deaths', text: '有霍亂死亡通報' },
       { id: 'pump', text: '喝 Broad Street 街泵的水' },
     ],
-    summary: () => '四個地方排在一起：喝街泵水的兩處死得多，不喝的兩處死得少得多。',
+    summary: () => '四份記錄排在一起：供街泵水的兩處有較多死亡通報；另兩處情況較輕。濟貧院也有死者，「有死者」分不開輕重。',
   },
   neighbour: {
     id: 'neighbour',
@@ -221,6 +222,8 @@ export interface TableRow {
   needs: EvidenceId[][];
   /** 每一欄的正確答案（玩家自己填） */
   facts: Record<ColumnId, boolean>;
+  /** 從已知結果摘出的觀察，唯讀；不是新增存檔格子，也不是因果假說。 */
+  reportedDeaths: boolean;
   result: string;
   many: boolean;
 }
@@ -238,7 +241,8 @@ export const TABLE_ROWS: TableRow[] = [
     label: '啤酒廠（七十餘名工人）',
     needs: [['E03', 'E02'], ['E03', 'E01']],
     facts: { zone: true, factory: true, crowd: true, pump: false },
-    result: '幾乎沒事',
+    reportedDeaths: false,
+    result: '未見工人死亡登記；無重症，兩人輕微不適',
     many: false,
   },
   {
@@ -246,7 +250,8 @@ export const TABLE_ROWS: TableRow[] = [
     label: '濟貧院（535 名住民）',
     needs: [['E04', 'E05']],
     facts: { zone: true, factory: false, crowd: true, pump: false },
-    result: '535 人中 5 人死亡',
+    reportedDeaths: true,
+    result: '535 名原有住民中 5 人死亡（不含發病後才入院者）',
     many: false,
   },
   {
@@ -254,7 +259,8 @@ export const TABLE_ROWS: TableRow[] = [
     label: '雷管工廠（約 200 名工人）',
     needs: [['E09']],
     facts: { zone: true, factory: true, crowd: true, pump: true },
-    result: '十幾人死亡',
+    reportedDeaths: true,
+    result: '十幾名工人在自己家中死亡',
     many: true,
   },
   {
@@ -262,7 +268,8 @@ export const TABLE_ROWS: TableRow[] = [
     label: '咖啡館的常客',
     needs: [['E10']],
     facts: { zone: true, factory: false, crowd: false, pump: true },
-    result: '已知 9 位常客死亡',
+    reportedDeaths: true,
+    result: '已知 9 位常客死亡（常客總數不詳）',
     many: true,
   },
 ];
@@ -303,7 +310,11 @@ export function haleTalk(
 
     case 'table':
       if (failures >= 3)
-        return ['一欄一欄看：哪一欄，打勾的地方都死得多、沒打勾的地方都死得少？'];
+        return [
+          '濟貧院院子裡的泵，抽的是自家的井；雷管工廠的水桶，裝的卻是街泵的水。別只看人在哪裡舀水。',
+          '「有死者」看似能分開？再看濟貧院：535 人只死了 5 人，和四周的情況很不一樣。',
+          '先把每一列照證詞填對，再比供水來源：這四份記錄裡，哪兩處情況較輕？',
+        ];
       if (seenHere < totalHere)
         return ['濟貧院的大門和院子、雷管工廠、那間咖啡館——每一處都問問。', '問過的地方，會出現在推理板的比較表上。'];
       return ['都問過了。打開推理板，照你問到的話把表填起來。', '我說是臭氣，你說是水。表填好了，讓它自己說話。'];

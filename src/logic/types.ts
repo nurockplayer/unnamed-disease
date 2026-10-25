@@ -50,8 +50,10 @@ export type Verdict = 'solved' | 'partial' | 'ruledOut' | 'competing' | 'overrea
 export interface Response {
   verdict: Verdict;
   lines: string[];
-  /** 表格題：填錯的格子，格式為 `${RowId}:${ColumnId}` */
+  /** 舊存檔回覆的逐格標記；新表格回覆使用 reviewRow，不公開逐格答案。 */
   wrongCells?: string[];
+  /** 比較表只指向需重讀的一列，不逐格公開是／否答案。 */
+  reviewRow?: RowId;
 }
 
 export interface Attempt {

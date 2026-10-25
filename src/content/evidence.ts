@@ -148,10 +148,10 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
     title: '濟貧院院子裡的水泵',
     body: [
       '院子角落有一口井，井上裝著水泵。提水的雜役說：',
-      '「院裡用自己的井，另外接 Grand Junction 水務公司的水。」',
-      '「Broad Street 那個泵？院裡從來不派人去那兒打水。」',
+      '「這個泵抽的是院子底下自己的井水，另外還接 Grand Junction 水務公司的水。」',
+      '「院裡要用水，就在裡面取；不用差人提桶到街口排隊。」',
     ],
-    takeaway: '濟貧院用自己的井和 Grand Junction 公司的水，從不去 Broad Street 街泵打水。',
+    takeaway: '院子裡也有水泵——抽的是院內井水，另接 Grand Junction 供水；不必到街口取水。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
@@ -159,6 +159,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
         source: `${S01}，p.42`,
       },
       { kind: 'FICTION', note: '雜役與這段對話是虛構的。' },
+      { kind: 'RECONSTRUCTION', note: '「在裡面取、不差人到街口排隊」改寫院方不派人去 Broad Street 取水的記錄；不是只憑有井就斷定不用街泵。訪問安排在 9 月 6 日，實際查問日期不詳。' },
     ],
   },
   E09: {
@@ -167,8 +168,8 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
     title: 'Broad Street 37 號：雷管工廠工頭的話',
     body: [
       '「廠裡大概兩百個工人。」',
-      '「我們在廠裡擺了兩個桶，一直裝滿水，誰渴了誰喝。」',
-      '「水從哪來？當然是街上那個泵，就在門口。」',
+      '「我們在廠裡擺了兩個桶，一直用街上那個泵的水裝滿，供想喝的人取用。」',
+      '你記下：喝水的地方是廠內水桶；還得沿著工頭的話，往回找水從哪裡來。',
       '「這幾天，已經有十幾個人死了，都死在自己家裡。」',
     ],
     takeaway: '雷管工廠約 200 人，廠裡兩桶水裝的是街泵的水；已有十幾人死於霍亂。',
@@ -181,7 +182,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       },
       {
         kind: 'RECONSTRUCTION',
-        note: '18 人是 Snow 事後的統計；9 月 6 日當天確切人數不詳，所以工頭只說「十幾個」。',
+        note: '18 人是 Snow 事後的統計；9 月 6 日當天確切人數不詳，所以工頭只說「十幾個」。主角關於廠內水桶與水源的筆記是重建，不表示每名工人都喝過，也不表示死者在廠內死亡。',
       },
       { kind: 'FICTION', note: '工頭與這段對話是虛構的。' },
     ],

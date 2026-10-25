@@ -1,0 +1,78 @@
+{
+  "phase": "scene",
+  "sequence": "to2",
+  "step": 0,
+  "chapter": 2,
+  "puzzle": "table",
+  "seen": [
+    "E02",
+    "E03",
+    "E04",
+    "E05",
+    "E09",
+    "E10"
+  ],
+  "reading": null,
+  "boardOpen": true,
+  "slots": [
+    null,
+    null
+  ],
+  "option": "pump",
+  "cells": {
+    "brewery": {
+      "zone": true,
+      "factory": true,
+      "crowd": true,
+      "pump": false
+    },
+    "workhouse": {
+      "zone": true,
+      "factory": false,
+      "crowd": true,
+      "pump": false
+    },
+    "capworks": {
+      "zone": true,
+      "factory": true,
+      "crowd": true,
+      "pump": true
+    },
+    "coffee": {
+      "zone": true,
+      "factory": false,
+      "crowd": false,
+      "pump": null
+    }
+  },
+  "attempts": [
+    {
+      "puzzle": "brewery",
+      "evidence": [
+        "E02",
+        "E03"
+      ],
+      "option": "water",
+      "verdict": "solved"
+    },
+    {
+      "puzzle": "table",
+      "evidence": [],
+      "option": "crowd",
+      "verdict": "ruledOut"
+    }
+  ],
+  "reply": {
+    "verdict": "insufficient",
+    "lines": [
+      "先別急著挑欄位。"
+    ],
+    "wrongCells": [
+      "coffee:pump"
+    ]
+  },
+  "look": null,
+  "anomaly": false,
+  "showSources": false,
+  "confirmRestart": false
+}
