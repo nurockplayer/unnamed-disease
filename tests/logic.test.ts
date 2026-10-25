@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { EVIDENCE } from '../src/content/evidence';
-import { CHAPTERS, PUZZLES, SEQUENCES, TABLE_COLUMNS, TABLE_ROWS, tableTruth } from '../src/content/story';
+import { CHAPTERS, PUZZLES, SEQUENCES, TABLE_COLUMNS, TABLE_ROWS, haleTalk, tableTruth } from '../src/content/story';
 import { evaluate } from '../src/logic/puzzles';
-import { canSubmit, initialState, reduce, type Action } from '../src/logic/state';
+import { canSubmit, initialState, reduce, tableFilled, type Action } from '../src/logic/state';
 import type { EvidenceId, PuzzleId, State } from '../src/logic/types';
 
 const run = (actions: Action[], s: State = initialState()) => actions.reduce(reduce, s);
@@ -58,8 +58,9 @@ describe('puzzle rules', () => {
     cells.coffee.crowd = true;
     const r = evaluate({ puzzle: 'table', evidence: [], option: 'pump', cells });
     expect(r.verdict).toBe('insufficient');
-    expect(r.wrongCells).toEqual(['capworks:pump', 'coffee:crowd']);
-    for (const col of ['zone', 'factory', 'crowd'])
+    expect(r.reviewRow).toBe('capworks');
+    expect(r.wrongCells).toBeUndefined();
+    for (const col of ['zone', 'factory', 'crowd', 'deaths'])
       expect(evaluate({ puzzle: 'table', evidence: [], option: col, cells: tableTruth() }).verdict).toBe('ruledOut');
   });
 
@@ -69,6 +70,104 @@ describe('puzzle rules', () => {
       expect(separates).toBe(false);
     }
     expect(TABLE_ROWS.every((r) => r.facts.pump === r.many)).toBe(true);
+  });
+
+  it('table: exhausts all 65,536 boolean grids × five choices; only one submission solves', () => {
+    // Pin the evidence reading independently of tableTruth(), including the well/tubs distinction.
+    expect(tableTruth()).toEqual({
+      brewery: { zone: true, factory: true, crowd: true, pump: false },
+      workhouse: { zone: true, factory: false, crowd: true, pump: false },
+      capworks: { zone: true, factory: true, crowd: true, pump: true },
+      coffee: { zone: true, factory: false, crowd: false, pump: true },
+    });
+    const positions = TABLE_ROWS.flatMap((r) => TABLE_COLUMNS.map((c) => [r.id, c.id] as const));
+    const solved: string[] = [];
+    let silentFailures = 0;
+    let checks = 0;
+    for (let mask = 0; mask < 2 ** positions.length; mask++) {
+      const cells = tableTruth();
+      positions.forEach(([r, c], bit) => { cells[r][c] = !!(mask & (1 << bit)); });
+      for (const option of PUZZLES.table.options) {
+        const reply = evaluate({ puzzle: 'table', evidence: [], option: option.id, cells });
+        checks++;
+        if (reply.verdict === 'solved') solved.push(`${JSON.stringify(cells)}:${option.id}`);
+        else if (!reply.lines.length) silentFailures++;
+      }
+    }
+    expect(checks).toBe(327_680);
+    expect(solved).toEqual([`${JSON.stringify(tableTruth())}:pump`]);
+    expect(silentFailures).toBe(0);
+  });
+
+  it('table: every single unknown cell blocks all five choices and still gives feedback', () => {
+    for (const row of TABLE_ROWS) for (const col of TABLE_COLUMNS) {
+      const cells: State['cells'] = tableTruth();
+      cells[row.id][col.id] = null;
+      for (const option of PUZZLES.table.options) {
+        const reply = evaluate({ puzzle: 'table', evidence: [], option: option.id, cells });
+        expect(reply.verdict).toBe('insufficient');
+        expect(reply.reviewRow).toBe(row.id);
+        expect(reply.lines.length).toBeGreaterThan(0);
+      }
+    }
+    expect(evaluate({ puzzle: 'table', evidence: [], option: 'pump' }).verdict).toBe('insufficient');
+  });
+
+  it('table: results stay hidden and no column can be chosen until all 16 cells are filled, right or wrong', () => {
+    const base = run(read(['E04', 'E05', 'E09', 'E10']), playTo(2));
+    expect(tableFilled(base)).toBe(false);
+    expect(reduce(base, { type: 'chooseOption', id: 'pump' }).option).toBeNull();
+
+    // 填錯也沒關係：16 格都填上「是」就能對照結果、選欄
+    const allTrue = run(
+      TABLE_ROWS.flatMap((r) =>
+        TABLE_COLUMNS.map((c) => ({ type: 'cycleCell', row: r.id, col: c.id }) as Action),
+      ),
+      base,
+    );
+    expect(tableFilled(allTrue)).toBe(true);
+    expect(reduce(allTrue, { type: 'chooseOption', id: 'pump' }).option).toBe('pump');
+
+    // 有一格被清空，結果又藏起來，也不能改選
+    const gap = run(
+      [
+        { type: 'cycleCell', row: 'coffee', col: 'pump' },
+        { type: 'cycleCell', row: 'coffee', col: 'pump' },
+      ],
+      allTrue,
+    );
+    expect(tableFilled(gap)).toBe(false);
+    expect(reduce(gap, { type: 'chooseOption', id: 'pump' }).option).toBeNull();
+    expect(reduce(gap, { type: 'chooseOption', id: 'zone' }).option).toBeNull();
+  });
+
+  it('table: different mistakes within the same row do not reveal the wrong boolean cells', () => {
+    for (const row of TABLE_ROWS) {
+      const replies = TABLE_COLUMNS.map((col) => {
+        const cells = tableTruth();
+        cells[row.id][col.id] = !cells[row.id][col.id];
+        return evaluate({ puzzle: 'table', evidence: [], option: 'pump', cells });
+      });
+      for (const reply of replies) {
+        expect(reply).toEqual(replies[0]);
+        expect(reply.reviewRow).toBe(row.id);
+        expect(reply.wrongCells).toBeUndefined();
+      }
+    }
+  });
+
+  it('table: the death-report decoy matches three rows but the workhouse refutes it', () => {
+    expect(TABLE_ROWS.filter((r) => r.reportedDeaths === r.many).map((r) => r.id)).toEqual([
+      'brewery', 'capworks', 'coffee',
+    ]);
+    const reply = evaluate({ puzzle: 'table', evidence: [], option: 'deaths', cells: tableTruth() });
+    expect(reply.verdict).toBe('ruledOut');
+    expect(reply.lines.join('')).toContain('五百多');
+    expect(reply.lines.join('')).toContain('幾個');
+    // Neither the original columns nor their inverse separates the observations.
+    for (const col of TABLE_COLUMNS.filter((c) => c.id !== 'pump')) {
+      expect(TABLE_ROWS.every((r) => r.facts[col.id] === !r.many)).toBe(false);
+    }
   });
 
   it('neighbour: only the limited claim is accepted', () => {
@@ -188,6 +287,28 @@ describe('game flow', () => {
     expect(t.puzzle).toBe('neighbour');
     expect(t.reply?.verdict).toBe('solved');
     expect(t.option).toBeNull();
+  });
+
+  it('three failed table submissions unlock source-specific help; rereading preserves cells and retry solves', () => {
+    let s = run([...read(['E04', 'E05', 'E09', 'E10']), ...fillTable(),
+      { type: 'cycleCell', row: 'workhouse', col: 'pump' }, // false → unknown → true
+      { type: 'cycleCell', row: 'workhouse', col: 'pump' },
+      { type: 'chooseOption', id: 'pump' },
+      { type: 'submit' }, { type: 'submit' }, { type: 'submit' },
+    ], playTo(2));
+    expect(s.attempts.filter((a) => a.puzzle === 'table')).toHaveLength(3);
+    expect(s.puzzle).toBe('table');
+    const hint = haleTalk('table', 4, 4, false, 3).join('');
+    expect(hint).toContain('自家的井');
+    expect(hint).toContain('五百多');
+    const cells = structuredClone(s.cells);
+    s = run([{ type: 'read', id: 'E05' }, { type: 'closeReading' }, { type: 'openBoard' }], s);
+    expect(s.cells).toEqual(cells);
+    s = run([
+      { type: 'cycleCell', row: 'workhouse', col: 'pump' },
+      { type: 'submit' },
+    ], s);
+    expect(s.puzzle).toBe('neighbour');
   });
 
   it('single-slot puzzles replace the slot instead of filling a second one', () => {

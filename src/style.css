@@ -969,9 +969,28 @@ button:focus-visible,
   color: #b7d3a6;
 }
 
-.compare td.wrong {
+.compare tr.needs-review {
   outline: 2px solid var(--red);
   outline-offset: -2px;
+}
+
+.compare small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.table-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.table-sources .link {
+  font-size: 0.78rem;
+  min-height: 2.75rem;
+  text-align: left;
 }
 
 /* 手機：每個地方一張卡片，格子帶欄名 */

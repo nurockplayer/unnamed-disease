@@ -60,11 +60,15 @@ export function rowKnown(s: State, row: RowId): boolean {
   return def.needs.some((set) => set.every((id) => s.seen.includes(id)));
 }
 
+/** 比較表 16 格都填了（不一定填對）才顯示結果、才准選欄 */
+export function tableFilled(s: State): boolean {
+  return TABLE_ROWS.every((r) => rowKnown(s, r.id) && TABLE_COLUMNS.every((c) => s.cells[r.id][c.id] !== null));
+}
+
 export function canSubmit(s: State): boolean {
   if (s.option === null) return false;
   const kind = PUZZLES[s.puzzle].kind;
-  if (kind === 'table')
-    return TABLE_ROWS.every((r) => rowKnown(s, r.id) && TABLE_COLUMNS.every((c) => s.cells[r.id][c.id] !== null));
+  if (kind === 'table') return tableFilled(s);
   const n = slotCount(s);
   return s.slots.slice(0, n).every((x) => x !== null);
 }
@@ -169,8 +173,11 @@ function step(s: State, a: Action): State {
       return { ...s, slots, reply: null };
     }
 
-    case 'chooseOption':
+    case 'chooseOption': {
+      // 比較表填完之前（或又被清空時）不能選欄；已選的可取消
+      if (PUZZLES[s.puzzle].kind === 'table' && !tableFilled(s) && s.option !== a.id) return s;
       return { ...s, reply: null, option: s.option === a.id ? null : a.id };
+    }
 
     case 'cycleCell': {
       if (!rowKnown(s, a.row)) return s;

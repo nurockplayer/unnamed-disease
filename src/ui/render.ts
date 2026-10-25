@@ -11,7 +11,7 @@ import {
   closingRemark,
   haleTalk,
 } from '../content/story';
-import { canSubmit, failures, rowKnown, slotCount } from '../logic/state';
+import { canSubmit, failures, rowKnown, slotCount, tableFilled } from '../logic/state';
 import { buildFeedbackStats, FEEDBACK_QUESTIONS } from '../logic/feedback';
 import type { Beat, EvidenceId, ProvenanceKind, PuzzleId, State, Verdict } from '../logic/types';
 import { portrait, sceneFor } from './scene';
@@ -248,7 +248,10 @@ function board(s: State): string {
 
     <h3>${p.kind === 'table' ? '哪一欄能把結果分開？' : '你的判斷'}</h3>
     ${p.kind === 'table' ? '' : `<p class="frame">${esc(p.frame)}</p>`}
-    <div class="claims${p.kind === 'none' || p.kind === 'single' ? ' wide' : ''}">
+    ${
+      p.kind === 'table' && !tableFilled(s)
+        ? '<p class="empty-note" data-testid="table-locked" data-key="table-locked" tabindex="-1">四欄都填完（填錯也沒關係），結果才會列出來，也才能選欄。</p>'
+        : `<div class="claims${p.kind === 'none' || p.kind === 'single' ? ' wide' : ''}">
       ${p.options
         .map((o) => {
           const on = s.option === o.id;
@@ -259,7 +262,8 @@ function board(s: State): string {
                     }</button>`;
         })
         .join('')}
-    </div>
+    </div>`
+    }
 
     ${
       s.reply
@@ -305,33 +309,44 @@ function evidencePicker(s: State, n: 1 | 2): string {
 }
 
 function table(s: State): string {
-  const wrong = new Set(s.reply?.wrongCells ?? []);
   const missing = TABLE_ROWS.filter((r) => !rowKnown(s, r.id)).length;
+  const filled = tableFilled(s);
+  const hidden = '？（填完表再對照）';
   const show = (v: boolean | null) => (v === null ? '？' : v ? '是' : '否');
   return `
     <p class="frame">${esc(PUZZLES.table.frame)}</p>
     ${missing ? `<p class="empty-note" data-testid="table-missing">還有 ${missing} 個地方沒調查清楚，表上那幾列先空著。</p>` : ''}
     <table class="compare" data-testid="compare">
-      <thead><tr><th>地方</th>${TABLE_COLUMNS.map((c) => `<th>${esc(c.label)}？</th>`).join('')}<th>結果</th></tr></thead>
+      <thead><tr><th scope="col">地方</th>${TABLE_COLUMNS.map((c) => `<th scope="col">${esc(c.label)}？</th>`).join('')}<th scope="col">有霍亂死亡通報？<small>依結果列出</small></th><th scope="col">結果</th></tr></thead>
       <tbody>
       ${TABLE_ROWS.map((r) => {
         if (!rowKnown(s, r.id))
-          return `<tr class="unknown-row"><th>${esc(r.label)}</th><td colspan="${TABLE_COLUMNS.length + 1}">還沒調查</td></tr>`;
-        return `<tr>
-          <th>${esc(r.label)}</th>
+          return `<tr class="unknown-row"><th scope="row">${esc(r.label)}</th><td colspan="${TABLE_COLUMNS.length + 2}">還沒調查</td></tr>`;
+        const review = s.reply?.reviewRow === r.id;
+        const sources = [...new Set(r.needs.flat())].filter((id) => s.seen.includes(id));
+        return `<tr${review ? ' class="needs-review"' : ''}>
+          <th scope="row">${esc(r.label)}${review ? '<small>請重讀這一列的證詞</small>' : ''}
+            <span class="table-sources">${sources.map((id) => `<button class="link" data-action="read" data-id="${id}"
+              data-key="table-read-${r.id}-${id}" data-testid="table-read-${r.id}-${id}">重讀${esc(EVIDENCE[id].object)}</button>`).join('')}</span>
+          </th>
           ${TABLE_COLUMNS.map((c) => {
             const v = s.cells[r.id][c.id];
-            const bad = wrong.has(`${r.id}:${c.id}`);
-            return `<td data-label="${esc(c.label)}"${bad ? ' class="wrong"' : ''}><button class="cell" data-action="cycleCell"
+            return `<td data-label="${esc(c.label)}"><button class="cell" data-action="cycleCell"
                  data-id="${r.id}" data-col="${c.id}" data-key="cell-${r.id}-${c.id}" data-testid="cell-${r.id}-${c.id}"
                  aria-label="${esc(r.label)}：${esc(c.label)}？目前${v === null ? '未填' : show(v)}">${show(v)}</button></td>`;
           }).join('')}
-          <td data-label="結果" class="${r.many ? 'many' : 'few'}">${esc(r.result)}</td>
+          <td data-label="有霍亂死亡通報" data-testid="deaths-${r.id}">${
+            filled ? `${r.reportedDeaths ? '是' : '否'}<small>依結果列出</small>` : hidden
+          }</td>
+          <td data-label="結果" data-testid="result-${r.id}" class="${filled ? (r.many ? 'many' : 'few') : ''}">${
+            filled ? esc(r.result) : hidden
+          }</td>
         </tr>`;
       }).join('')}
       </tbody>
     </table>
-    <p class="muted small-note">點格子切換：？ → 是 → 否。</p>`;
+    <p class="muted small-note">點格子切換：？ → 是 → 否。填的是證詞中的供水方式，不表示每個人都喝過。</p>
+    <p class="muted small-note">這是四份觀察的對照。咖啡館常客總數不詳，不能拿死亡人數直接排死亡率。</p>`;
 }
 
 function attemptsList(s: State): string {

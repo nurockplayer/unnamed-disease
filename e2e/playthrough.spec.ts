@@ -2,6 +2,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { EVIDENCE } from '../src/content/evidence';
 import { SEQUENCES, TABLE_COLUMNS, TABLE_ROWS } from '../src/content/story';
 import type { EvidenceId } from '../src/logic/types';
+import legacyTableSave from './fixtures/case01-v3-table.json' with { type: 'json' };
 
 const firstLine = (t: string) => t.split('\n')[0];
 
@@ -194,12 +195,19 @@ test('whole case: three parts, a wrong answer on every question, summary and res
 
   await openBoard(page);
   await expect(page.getByTestId('table-missing')).toHaveCount(0);
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('填完表再對照');
+  await expect(page.getByTestId('claim-pump')).toHaveCount(0);
   await fillTable(page);
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('是');
+  await expect(page.getByTestId('result-workhouse')).toContainText('五百多');
   await setCell(page, 'capworks', 'pump', false); // 故意填錯一格
   await answer(page, 'pump', '證據撐不住這句話');
   await expect(page.getByTestId('board-reply')).toContainText('雷管工廠那兩桶水');
   await setCell(page, 'capworks', 'pump', true);
   await answer(page, 'crowd', '這一欄分不開');
+  await answer(page, 'deaths', '這一欄分不開');
+  await expect(page.getByTestId('board-reply')).toContainText('濟貧院這一列');
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('是');
   if (isMobile) await expectNoHorizontalScroll(page);
   await capture(page, info, 'table');
   await answer(page, 'pump', '找到了');
@@ -371,4 +379,65 @@ test('focus survives re-renders inside a dialog', async ({ page }) => {
     () => !!document.querySelector('[data-testid="board"]')?.contains(document.activeElement),
   );
   expect(inBoard).toBe(true);
+});
+
+
+test('part two: source-level feedback, three-failure hint, reread, reload and keyboard repair', async ({ page, isMobile }, info) => {
+  await startSkippingIntro(page);
+  await solveChapter1(page);
+  await collect(page, 'E04', 'E05', 'E09', 'E10');
+  await openBoard(page);
+  await fillTable(page);
+  await setCell(page, 'workhouse', 'pump', true); // 院內有泵，不等於街泵供水
+  for (let i = 0; i < 3; i++) await answer(page, 'pump', '證據撐不住這句話');
+  await expect(page.getByTestId('question')).not.toContainText('我天天喝');
+  await expect(page.locator('.compare .needs-review')).toHaveCount(1);
+  await expect(page.locator('.compare .needs-review')).toContainText('濟貧院');
+  await expect(page.locator('.compare td.wrong')).toHaveCount(0);
+  if (isMobile) await expectNoHorizontalScroll(page);
+  await capture(page, info, 'table-reread');
+
+  await page.getByTestId('table-read-workhouse-E05').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('reader')).toContainText('院子底下自己的井水');
+  await page.keyboard.press('Escape');
+  await page.getByTestId('spot-hale').click();
+  await expect(page.getByTestId('dialogue')).toContainText('自家的井');
+  await expect(page.getByTestId('dialogue')).toContainText('五百多');
+  await page.reload();
+  await page.getByTestId('continue').click();
+  await expect(page.getByTestId('chapter')).toContainText('第二段');
+  await openBoard(page);
+  await expect(page.getByTestId('cell-workhouse-pump')).toHaveText('是');
+  await expect(page.getByTestId('cell-coffee-pump')).toHaveText('是');
+  await expect(page.getByTestId('claim-pump')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('cell-workhouse-pump').focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('cell-workhouse-pump')).toHaveText('否');
+  await expect(page.getByTestId('cell-workhouse-pump')).toBeFocused();
+  await page.getByTestId('submit').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('question')).toContainText('我天天喝這泵的水');
+  if (isMobile) await expectNoHorizontalScroll(page);
+});
+
+test('save compatibility: resumes a frozen pre-D010 v3 table without changing any saved cells', async ({ page }) => {
+  // Literal old-format fixture, independent of current initialState()/tableTruth().
+  await page.evaluate((saved) => localStorage.setItem('unnamed-disease/case01/v3', JSON.stringify(saved)), legacyTableSave);
+  await page.reload();
+  await page.getByTestId('continue').click();
+  await expect(page.getByTestId('chapter')).toContainText('第二段');
+  await openBoard(page);
+  for (const [row, cells] of Object.entries(legacyTableSave.cells)) {
+    for (const [col, value] of Object.entries(cells)) {
+      await expect(page.getByTestId(`cell-${row}-${col}`)).toHaveText(value === null ? '？' : value ? '是' : '否');
+    }
+  }
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('填完表再對照');
+  await expect(page.getByTestId('claim-pump')).toHaveCount(0);
+  await expect(page.getByTestId('submit')).toBeDisabled();
+  await setCell(page, 'coffee', 'pump', true);
+  await expect(page.getByTestId('claim-crowd')).toContainText('已排除');
+  await answer(page, 'pump', '找到了');
+  await expect(page.getByTestId('question')).toContainText('我天天喝這泵的水');
 });
