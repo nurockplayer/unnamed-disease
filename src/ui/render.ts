@@ -142,8 +142,10 @@ function scene(s: State): string {
     ${
       earlier.length
         ? `<button class="link earlier-toggle" data-action="toggleEarlier" data-key="toggleEarlier"
-             aria-expanded="${s.showEarlier}" aria-controls="earlier-list" data-testid="earlier-toggle"
-             >先前的線索（${earlier.length}）${s.showEarlier ? ' ▴' : ' ▾'}</button>
+             aria-expanded="${s.showEarlier}"${s.showEarlier ? ' aria-controls="earlier-list"' : ''}
+             data-testid="earlier-toggle">先前的線索（${earlier.length}）${
+               s.showEarlier ? ' ▴' : ' ▾'
+             }</button>
            ${
              s.showEarlier
                ? `<ul class="earlier-list" id="earlier-list" data-testid="earlier-list">${earlier
