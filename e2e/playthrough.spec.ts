@@ -195,7 +195,11 @@ test('whole case: three parts, a wrong answer on every question, summary and res
 
   await openBoard(page);
   await expect(page.getByTestId('table-missing')).toHaveCount(0);
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('填完表再對照');
+  await expect(page.getByTestId('claim-pump')).toHaveCount(0);
   await fillTable(page);
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('是');
+  await expect(page.getByTestId('result-workhouse')).toContainText('五百多');
   await setCell(page, 'capworks', 'pump', false); // 故意填錯一格
   await answer(page, 'pump', '證據撐不住這句話');
   await expect(page.getByTestId('board-reply')).toContainText('雷管工廠那兩桶水');
@@ -378,7 +382,7 @@ test('part two: source-level feedback, three-failure hint, reread, reload and ke
   await page.keyboard.press('Escape');
   await page.getByTestId('spot-hale').click();
   await expect(page.getByTestId('dialogue')).toContainText('自家的井');
-  await expect(page.getByTestId('dialogue')).toContainText('535');
+  await expect(page.getByTestId('dialogue')).toContainText('五百多');
   await page.reload();
   await page.getByTestId('continue').click();
   await expect(page.getByTestId('chapter')).toContainText('第二段');
@@ -408,9 +412,11 @@ test('save compatibility: resumes a frozen pre-D010 v3 table without changing an
       await expect(page.getByTestId(`cell-${row}-${col}`)).toHaveText(value === null ? '？' : value ? '是' : '否');
     }
   }
-  await expect(page.getByTestId('claim-crowd')).toContainText('已排除');
+  await expect(page.getByTestId('deaths-workhouse')).toContainText('填完表再對照');
+  await expect(page.getByTestId('claim-pump')).toHaveCount(0);
   await expect(page.getByTestId('submit')).toBeDisabled();
   await setCell(page, 'coffee', 'pump', true);
+  await expect(page.getByTestId('claim-crowd')).toContainText('已排除');
   await answer(page, 'pump', '找到了');
   await expect(page.getByTestId('question')).toContainText('我天天喝這泵的水');
 });

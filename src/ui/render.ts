@@ -11,7 +11,7 @@ import {
   closingRemark,
   haleTalk,
 } from '../content/story';
-import { canSubmit, failures, rowKnown, slotCount } from '../logic/state';
+import { canSubmit, failures, rowKnown, slotCount, tableFilled } from '../logic/state';
 import type { Beat, EvidenceId, ProvenanceKind, PuzzleId, State, Verdict } from '../logic/types';
 import { portrait, sceneFor } from './scene';
 
@@ -247,7 +247,10 @@ function board(s: State): string {
 
     <h3>${p.kind === 'table' ? '哪一欄能把結果分開？' : '你的判斷'}</h3>
     ${p.kind === 'table' ? '' : `<p class="frame">${esc(p.frame)}</p>`}
-    <div class="claims${p.kind === 'none' || p.kind === 'single' ? ' wide' : ''}">
+    ${
+      p.kind === 'table' && !tableFilled(s)
+        ? '<p class="empty-note" data-testid="table-locked" data-key="table-locked" tabindex="-1">四欄都填完（填錯也沒關係），結果才會列出來，也才能選欄。</p>'
+        : `<div class="claims${p.kind === 'none' || p.kind === 'single' ? ' wide' : ''}">
       ${p.options
         .map((o) => {
           const on = s.option === o.id;
@@ -258,7 +261,8 @@ function board(s: State): string {
                     }</button>`;
         })
         .join('')}
-    </div>
+    </div>`
+    }
 
     ${
       s.reply
@@ -305,6 +309,8 @@ function evidencePicker(s: State, n: 1 | 2): string {
 
 function table(s: State): string {
   const missing = TABLE_ROWS.filter((r) => !rowKnown(s, r.id)).length;
+  const filled = tableFilled(s);
+  const hidden = '？（填完表再對照）';
   const show = (v: boolean | null) => (v === null ? '？' : v ? '是' : '否');
   return `
     <p class="frame">${esc(PUZZLES.table.frame)}</p>
@@ -328,8 +334,12 @@ function table(s: State): string {
                  data-id="${r.id}" data-col="${c.id}" data-key="cell-${r.id}-${c.id}" data-testid="cell-${r.id}-${c.id}"
                  aria-label="${esc(r.label)}：${esc(c.label)}？目前${v === null ? '未填' : show(v)}">${show(v)}</button></td>`;
           }).join('')}
-          <td data-label="有霍亂死亡通報" data-testid="deaths-${r.id}">${r.reportedDeaths ? '是' : '否'}<small>依結果列出</small></td>
-          <td data-label="結果" class="${r.many ? 'many' : 'few'}">${esc(r.result)}</td>
+          <td data-label="有霍亂死亡通報" data-testid="deaths-${r.id}">${
+            filled ? `${r.reportedDeaths ? '是' : '否'}<small>依結果列出</small>` : hidden
+          }</td>
+          <td data-label="結果" data-testid="result-${r.id}" class="${filled ? (r.many ? 'many' : 'few') : ''}">${
+            filled ? esc(r.result) : hidden
+          }</td>
         </tr>`;
       }).join('')}
       </tbody>

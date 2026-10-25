@@ -31,9 +31,9 @@ export function evaluate(sub: Submission): Response {
 /** 同一列的不同錯法收到相同回饋，避免「先全填是，再把紅格反轉」繞過閱讀。 */
 const ROW_HINTS: Record<RowId, string[]> = {
   brewery: ['重讀啤酒廠的回信或登記冊，再對照取水筆記：它做什麼、在哪裡、工人用什麼水？'],
-  workhouse: ['重讀門房與院內雜役的話。原來的住民和發病後才入院的人要分開；院子那個泵抽的是哪裡的水？'],
+  workhouse: ['重讀門房與院內雜役的話。原來的住民和發病後才入院的人要分開；院裡用的是哪一口井的水，會不會派人上街打水？'],
   capworks: ['重讀工頭的話：雷管工廠那兩桶水，喝的地方和取水來源是一回事嗎？工人死在家裡，能說明他沒在廠裡喝水嗎？'],
-  coffee: ['重讀老闆娘的話：常客來這裡做什麼，配餐時喝到什麼？不要把店名當成飲水的內容。'],
+  coffee: ['重讀老闆娘的話：常客從哪裡來、店裡有多少人做事，配餐時又喝到什麼？不要把店名當成飲水的內容。'],
 };
 
 export function evaluateTable(cells: Record<RowId, Record<ColumnId, boolean | null>> | undefined, column: string): Response {
@@ -57,26 +57,26 @@ export function evaluateTable(cells: Record<RowId, Record<ColumnId, boolean | nu
     case 'factory':
       return {
         verdict: 'ruledOut',
-        lines: ['啤酒廠和雷管工廠都是工廠：一個幾乎沒事，一個死了十幾個人。', '這一欄分不開。'],
+        lines: ['啤酒廠和雷管工廠都是工廠：一個幾乎沒事，一個死了好幾個工人。', '這一欄分不開。'],
       };
     case 'crowd':
       return {
         verdict: 'ruledOut',
-        lines: ['濟貧院五百多人只死了五個；雷管工廠兩百人卻死了十幾個。', '人多不多，分不開結果。'],
+        lines: ['濟貧院五百多人，只有幾個死；雷管工廠兩百人，卻接連有人死。', '人多不多，分不開結果。'],
       };
     case 'deaths':
       return {
         verdict: 'ruledOut',
         lines: [
           '啤酒廠沒有死亡通報，雷管工廠和咖啡館都有——乍看對得上。可濟貧院也有死者。',
-          '535 名原有住民中有 5 人死亡，卻遠比周圍街道的情況輕。「有死者」和「同樣嚴重」不是一回事。',
+          '濟貧院五百多名住民，也只死了幾個，卻遠比周圍街道的情況輕。「有死者」和「同樣嚴重」不是一回事。',
           '濟貧院這一列，就是這個分法的反例。',
         ],
       };
     case 'pump':
       return {
         verdict: 'solved',
-        lines: ['這四份記錄裡，供街泵水的兩處有較多死亡通報，另兩處情況較輕。', '值得繼續追查的是供水來源；這還不是每個人的因果證明。'],
+        lines: ['這四份記錄裡，喝街泵水的兩處，死亡通報比較多；沒喝的兩處比較少。', '值得繼續追查的是供水來源；這還不是每個人的因果證明。'],
       };
     default:
       return { verdict: 'insufficient', lines: ['選一欄。'] };

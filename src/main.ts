@@ -77,7 +77,9 @@ function draw(prev: State | null = null, action: Action | null = null) {
   if (now && now !== before) {
     if (!before) opener = activeKey;
     target = dialog?.querySelector<HTMLElement>(
-      now === 'reader' ? '[data-key="closeReading"]' : '[data-key^="chip-"], [data-key^="claim-"]',
+      now === 'reader'
+        ? '[data-key="closeReading"]'
+        : '[data-key^="chip-"], [data-key^="claim-"], [data-key="table-locked"]',
     ) ?? null;
   } else if (!now && before) {
     target = focusable(byKey(opener)) ?? focusable(byKey('openBoard'));
