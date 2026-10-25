@@ -72,6 +72,7 @@
   3. 紀錄室 9/12：Hampstead 寡婦（水會移動）→ 依逐日統計判斷「是拆把手結束了疫情嗎？」（只接受審慎答案）。
   - 結案頁：五步推理鏈、被排除的選項、黑爾先生依「說過頭」次數的三種評語、史實與虛構。
 - 測試：Vitest 30（窮舉每題所有證據 × 選項組合，成立組合固定、其餘都有回饋；三段流程；存檔相容）；Playwright 22（桌面＋Pixel 7：結案頁試玩回饋、全案流程含每題至少一次錯誤、不 softlock、重新整理續玩、鍵盤／焦點／Tab 迴圈、手機無橫向捲動）。`E2E_BASE_URL=… pnpm e2e` 可直接驗證線上版。
+- **怎麼跑測試（Owner 規則 2026-10-25，所有 worker 與 session 適用）**：一律用 `orb-test` 在 OrbStack 容器跑，不在 host 直接跑。單元測試／build：`orb-test -- pnpm test`、`orb-test -- pnpm build`（已驗證：容器內 Vitest 30/30）。全套件、E2E 等重型工作加 `--heavy`，會排隊等全機唯一的重型鎖並檢查 memory_pressure ≥20%，例如 `orb-test --heavy --image mcr.microsoft.com/playwright:v1.64.1-noble -- pnpm e2e`（此 E2E 指令尚未實跑驗證，首次執行者請回報結果）；重型工作只排在平日 03:00–15:00 JST。GPU 工作（WebGL QA、Blender、Godot）用 `orb-test --heavy --host -- <指令>`。`orb-test --status` 看鎖、隊列與執行中的工作；細節見 `orb-test --help`。worker brief 必須寫明這條。
 - 審查：兩次獨立史實審查（數字、日期、頁碼皆核對 Snow 1855；修正已套用）；Codex 程式審查（PR 上自動進行）；AI 盲測五輪（不讀設計與原始碼；2026-10-25 基準報告：五題中四題可憑 Snow 故事猜中）；ChatGPT（oracle-ego）審查 PR #5、#6。**仍無人類盲測。**
 - 已知缺口：場景是向量示意畫、無音效；第三段選項已改為語氣對稱（PR #8），但熟悉 Snow 故事的人仍可能直接猜中，待人類盲測確認；第二段仍可逐列硬試（約 64 次，D010 接受）；E06b／E12 是時間上提前的戲劇安排（已在史料註記標明）。
 - 下一步：① Owner 依[人類盲測指南](PLAYTEST.md)找 1–2 位不熟 Snow 的人試玩，結案頁「複製回饋」或「在 GitHub 回報」；② 依盲測回饋再調整（PR #8 已完成主角定位 D011、史實稽核修正、第三段選項對稱、UX／無障礙修正）；③ 之後才考慮 C 演出（轉場、鏡頭、音效）。
