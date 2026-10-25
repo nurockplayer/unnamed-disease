@@ -12,6 +12,7 @@ import {
   haleTalk,
 } from '../content/story';
 import { canSubmit, failures, rowKnown, slotCount, tableFilled } from '../logic/state';
+import { buildFeedbackStats, FEEDBACK_QUESTIONS } from '../logic/feedback';
 import type { Beat, EvidenceId, ProvenanceKind, PuzzleId, State, Verdict } from '../logic/types';
 import { portrait, sceneFor } from './scene';
 
@@ -389,6 +390,27 @@ function summary(s: State): string {
     <h2>史實與虛構</h2>
     <ul>${HISTORY_NOTES.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
     <p class="muted">文中「Snow 1855」指 John Snow，《On the Mode of Communication of Cholera》第二版（1855），頁碼為原書頁碼。</p>
+  </section>
+  <section class="playtest-feedback" aria-labelledby="feedback-title" data-testid="playtest-feedback">
+    <h2 id="feedback-title">試玩回饋</h2>
+    <p class="muted">以下回饋可選填；複製後可貼到聊天訊息，也可直接在 GitHub 回報。</p>
+    <h3>遊玩摘要</h3>
+    <pre class="feedback-stats" data-testid="feedback-stats">${esc(buildFeedbackStats(s))}</pre>
+    <div class="feedback-answers">
+      ${FEEDBACK_QUESTIONS.map((question, i) => `<div class="feedback-answer">
+        <label for="feedback-answer-${i}">${i + 1}. ${esc(question)}</label>
+        <textarea id="feedback-answer-${i}" name="feedback-${i}" rows="2" maxlength="1200"></textarea>
+      </div>`).join('')}
+    </div>
+    <div class="feedback-actions">
+      <button class="primary" type="button" data-action="copyFeedback" data-testid="copy-feedback">複製回饋</button>
+      <button class="ghost" type="button" data-action="githubFeedback" data-testid="github-feedback">在 GitHub 回報</button>
+    </div>
+    <p class="feedback-status" role="status" aria-live="polite" data-testid="feedback-status"></p>
+    <div class="feedback-fallback" data-testid="feedback-fallback" hidden>
+      <label for="feedback-report">複製失敗，請按 Ctrl／⌘+C 複製下方已選取的回饋文字：</label>
+      <textarea id="feedback-report" readonly rows="10"></textarea>
+    </div>
   </section>
   <button class="primary" data-action="restart" data-key="restart" data-testid="play-again">重新開始</button>
 </main>`;

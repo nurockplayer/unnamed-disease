@@ -795,6 +795,79 @@ button:focus-visible,
   margin: 0 0 0.4rem;
 }
 
+.playtest-feedback h3 {
+  font-size: 0.95rem;
+  margin: 0.8rem 0 0.25rem;
+}
+
+.feedback-stats {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 4px;
+  background: var(--night);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.feedback-answer {
+  margin-top: 0.75rem;
+}
+
+.feedback-answer label,
+.feedback-fallback label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.feedback-answer textarea,
+.feedback-fallback textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--night);
+  color: var(--text);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.feedback-answer textarea:focus-visible,
+.feedback-fallback textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.feedback-status {
+  min-height: 1.75em;
+  margin: 0.4rem 0 0;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.feedback-status a {
+  color: var(--accent);
+}
+
+.feedback-fallback[hidden] {
+  display: none;
+}
+
 .final-claim {
   font-size: 1.15rem;
 }

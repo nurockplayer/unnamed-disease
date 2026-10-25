@@ -1,7 +1,11 @@
 import './style.css';
 import { initialState, reduce, type Action } from './logic/state';
 import type { ColumnId, EvidenceId, RowId, State } from './logic/types';
+import { buildFeedbackReport, buildPlaytestIssueUrl, FEEDBACK_QUESTIONS } from './logic/feedback';
 import { render } from './ui/render';
+
+declare const __BUILD_ID__: string;
+const BUILD_ID = typeof __BUILD_ID__ === 'undefined' ? '' : __BUILD_ID__;
 
 const root = document.getElementById('app')!;
 let state: State = initialState();
@@ -36,11 +40,29 @@ let opener: string | null = null;
 type Dialog = 'reader' | 'board' | null;
 const dialogOf = (s: State): Dialog => (s.reading ? 'reader' : s.boardOpen ? 'board' : null);
 
+/** 兩次操作間隔超過此值就只計這麼多，避免把離開、閒置的時間算進遊玩時間 */
+const IDLE_CAP_MS = 3 * 60_000;
+let lastActionAt: number | null = null;
+
+/** 盲測回饋用的統計：實際遊玩時間與每題錯誤送出次數 */
+function track(prev: State, next: State, action: Action): State {
+  const now = Date.now();
+  const elapsed = lastActionAt === null ? 0 : Math.min(now - lastActionAt, IDLE_CAP_MS);
+  lastActionAt = now;
+  if (next.phase === 'title') return next;
+  let out = prev.phase === 'title' ? next : { ...next, playMs: (prev.playMs ?? 0) + elapsed };
+  if (action.type === 'submit' && next.reply && next.reply.verdict !== 'solved') {
+    const counts = prev.wrongSubmits ?? {};
+    out = { ...out, wrongSubmits: { ...counts, [prev.puzzle]: (counts[prev.puzzle] ?? 0) + 1 } };
+  }
+  return out;
+}
+
 function dispatch(action: Action) {
   const next = reduce(state, action);
   if (next === state) return;
   const prev = state;
-  state = next;
+  state = track(prev, next, action);
   writeSave(state);
   if (state.phase !== 'title') saved = null;
   draw(prev, action);
@@ -141,9 +163,68 @@ root.addEventListener('click', (ev) => {
   const el = (ev.target as Element).closest<HTMLElement>('[data-action], [data-stop]');
   if (!el || el.hasAttribute('data-stop')) return; // 點在 modal 內部空白處不關閉
   if (el.dataset.action === 'continue') return resume();
+  if (el.dataset.action === 'copyFeedback') {
+    void copyFeedback();
+    return;
+  }
+  if (el.dataset.action === 'githubFeedback') {
+    openGithubFeedback();
+    return;
+  }
   const action = actionFrom(el);
   if (action) dispatch(action);
 });
+
+function feedbackAnswers(): Partial<Record<(typeof FEEDBACK_QUESTIONS)[number], string>> {
+  return Object.fromEntries(FEEDBACK_QUESTIONS.map((question, i) => [
+    question,
+    root.querySelector<HTMLTextAreaElement>(`#feedback-answer-${i}`)?.value ?? '',
+  ]));
+}
+
+function feedbackReport(): string {
+  return buildFeedbackReport(state, feedbackAnswers(), BUILD_ID);
+}
+
+function showFeedbackFallback(report: string) {
+  const fallback = root.querySelector<HTMLElement>('[data-testid="feedback-fallback"]');
+  const textarea = root.querySelector<HTMLTextAreaElement>('#feedback-report');
+  const status = root.querySelector<HTMLElement>('[data-testid="feedback-status"]');
+  if (!fallback || !textarea) return;
+  fallback.hidden = false;
+  textarea.value = report;
+  textarea.focus();
+  textarea.select();
+  status!.textContent = '無法直接複製。回饋文字已選取，請使用鍵盤複製。';
+}
+
+async function copyFeedback() {
+  const report = feedbackReport();
+  const status = root.querySelector<HTMLElement>('[data-testid="feedback-status"]');
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
+    await navigator.clipboard.writeText(report);
+    status!.textContent = '回饋已複製，可以貼到聊天訊息。';
+  } catch {
+    showFeedbackFallback(report);
+  }
+}
+
+function openGithubFeedback() {
+  const target = buildPlaytestIssueUrl(feedbackReport());
+  const opened = window.open(target, '_blank');
+  if (opened) opened.opener = null;
+  if (!opened) {
+    const status = root.querySelector<HTMLElement>('[data-testid="feedback-status"]');
+    status!.textContent = '瀏覽器未開啟新分頁。';
+    const link = document.createElement('a');
+    link.href = target;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = '按此開啟 GitHub 回報表單';
+    status!.append(' ', link);
+  }
+}
 
 root.addEventListener('keydown', (ev) => {
   const el = ev.target as HTMLElement;

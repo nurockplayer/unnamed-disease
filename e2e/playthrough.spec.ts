@@ -240,6 +240,27 @@ test('whole case: three parts, a wrong answer on every question, summary and res
   await expect(page.getByTestId('closing')).toBeVisible();
   await expect(summary).toContainText('史實與虛構');
   await capture(page, info, 'summary');
+  const feedback = page.getByTestId('playtest-feedback');
+  await expect(feedback).toBeVisible();
+  await expect(feedback.getByRole('heading', { name: '試玩回饋' })).toBeVisible();
+  await expect(feedback.locator('textarea[name^="feedback-"]')).toHaveCount(4);
+  expect(
+    await feedback.evaluate((element) =>
+      Boolean(element.compareDocumentPosition(document.querySelector('[data-testid="play-again"]')!) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ),
+  ).toBe(true);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: async () => { throw new Error('clipboard denied'); } },
+    });
+  });
+  await page.getByTestId('copy-feedback').click();
+  const fallback = page.getByTestId('feedback-fallback');
+  await expect(fallback).toBeVisible();
+  await expect(page.locator('#feedback-report')).toHaveValue(/試玩回饋/);
+  await expect(page.getByTestId('feedback-status')).toContainText('已選取');
+  await expectNoHorizontalScroll(page);
   await page.getByTestId('play-again').click();
   await expect(page.getByRole('button', { name: '開始調查', exact: true })).toBeVisible();
 });

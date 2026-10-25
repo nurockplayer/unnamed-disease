@@ -8,6 +8,8 @@
 
 **線上版：https://nurockplayer.github.io/unnamed-disease/**（main 每次更新自動部署）
 
+盲測主持方式與回饋流程見[人類盲測指南](docs/PLAYTEST.md)。
+
 
 需求：Node 22.12+、24 或 26+（與 Vite 8／Vitest 5 一致）、pnpm。
 
