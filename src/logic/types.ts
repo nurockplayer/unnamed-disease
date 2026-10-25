@@ -82,6 +82,8 @@ export interface State {
   reading: EvidenceId | null;
   boardOpen: boolean;
   slots: [EvidenceId | null, EvidenceId | null];
+  /** 兩格都滿時，再選一份會替換的那一格（最近放上的）；舊存檔可能沒有此欄位 */
+  lastSlot?: 0 | 1;
   option: string | null;
   /** 比較表：玩家依證據填的格子 */
   cells: Record<RowId, Record<ColumnId, boolean | null>>;
@@ -91,6 +93,8 @@ export interface State {
   /** 正在看的場景細節（窗外、街泵…） */
   look: string | null;
   anomaly: boolean;
+  /** 「先前的線索」是否展開；收起時不渲染裡面的按鈕 */
+  showEarlier: boolean;
   showSources: boolean;
   /** 場景中按過一次「重新開始」，等待第二次確認 */
   confirmRestart: boolean;

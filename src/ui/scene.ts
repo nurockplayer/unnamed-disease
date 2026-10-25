@@ -20,6 +20,7 @@ function evidenceSpot(seen: EvidenceId[]) {
     return `
     <g class="hotspot${done ? ' seen' : ' fresh'}" role="button" tabindex="0" aria-label="${label}"
        data-action="read" data-id="${id}" data-key="spot-${id}" data-testid="spot-${id}">
+      <title>${label}</title>
       ${inner}
       <path class="hit" d="${shape}"/>
       ${done ? `<text class="tick" x="${b.x - 4}" y="${b.y + 6}">✓</text>` : `<circle class="beacon" cx="${b.x}" cy="${b.y}" r="9"/>`}
@@ -31,6 +32,7 @@ function lookSpot(id: string, label: string, shape: string, inner: string): stri
   return `
   <g class="hotspot look" role="button" tabindex="0" aria-label="${label}"
      data-action="look" data-id="${id}" data-key="spot-${id}" data-testid="spot-${id}">
+    <title>${label}</title>
     ${inner}
     <path class="hit" d="${shape}"/>
   </g>`;
@@ -40,6 +42,7 @@ function haleSpot(shape: string, inner: string): string {
   return `
   <g class="hotspot hale" role="button" tabindex="0" aria-label="和黑爾先生說話"
      data-action="talk" data-key="spot-hale" data-testid="spot-hale">
+    <title>和黑爾先生說話</title>
     ${inner}
     <path class="hit" d="${shape}"/>
   </g>`;

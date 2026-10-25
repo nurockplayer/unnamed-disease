@@ -310,12 +310,43 @@ test('keyboard only: Tab, Enter, Space and Escape reach and read a scene hotspot
   await tabTo(page, 'skip');
   await page.keyboard.press('Space');
   await expect(page.getByTestId('objective')).toBeVisible();
+  // 場景熱點以可存取名稱（aria-label）就能找到
+  await expect(page.getByRole('button', { name: '死亡登記冊', exact: true })).toHaveCount(1);
   await tabTo(page, 'spot-E01');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog', { name: EVIDENCE.E01.title, exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('reader')).toHaveCount(0);
   await expect(page.getByTestId('clue-count')).toHaveText('1 / 4');
+});
+
+test('earlier clues stay out of the accessibility tree until the list is expanded', async ({ page }) => {
+  await startSkippingIntro(page);
+  await solveChapter1(page);
+  await expect(page.getByTestId('earlier-toggle')).toContainText('先前的線索（2）');
+  await expect(page.getByTestId('earlier-list')).toHaveCount(0);
+  await expect(page.getByTestId('clue-E02')).toHaveCount(0);
+  await page.getByTestId('earlier-toggle').click();
+  await expect(page.getByTestId('earlier-toggle')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByTestId('earlier-list')).toBeVisible();
+  await expect(page.getByTestId('clue-E02')).toHaveCount(1);
+  await page.getByTestId('clue-E02').click();
+  await expect(page.getByTestId('reader')).toContainText(EVIDENCE.E02.title);
+});
+
+test('board slots fill the empty slot first and say which slot a new clue replaces', async ({ page }) => {
+  await startSkippingIntro(page);
+  await collect(page, 'E01', 'E02', 'E03');
+  await openBoard(page);
+  await page.getByTestId('chip-E01').click();
+  await expect(page.getByTestId('slot-0')).toContainText(EVIDENCE.E01.title);
+  await page.getByTestId('chip-E02').click();
+  await expect(page.getByTestId('slot-1')).toContainText(EVIDENCE.E02.title);
+  await expect(page.getByRole('heading', { name: /再選會替換證據二/ })).toBeVisible();
+  await expect(page.getByTestId('slot-1')).toContainText('再選會替換這格');
+  await page.getByTestId('chip-E03').click();
+  await expect(page.getByTestId('slot-0')).toContainText(EVIDENCE.E01.title);
+  await expect(page.getByTestId('slot-1')).toContainText(EVIDENCE.E03.title);
 });
 
 test('keyboard focus moves into dialogs, returns to the opener, and lands on feedback', async ({ page }) => {

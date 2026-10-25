@@ -4,6 +4,7 @@ import { CHAPTERS, PUZZLES, SEQUENCES, TABLE_COLUMNS, TABLE_ROWS, haleTalk, tabl
 import { evaluate } from '../src/logic/puzzles';
 import { canSubmit, initialState, reduce, tableFilled, type Action } from '../src/logic/state';
 import type { EvidenceId, PuzzleId, State } from '../src/logic/types';
+import { render } from '../src/ui/render';
 
 const run = (actions: Action[], s: State = initialState()) => actions.reduce(reduce, s);
 const ALL = Object.keys(EVIDENCE) as EvidenceId[];
@@ -180,6 +181,17 @@ describe('puzzle rules', () => {
     expect(evaluate({ puzzle: 'hampstead', evidence: ['E06b', 'E03'], option: 'water' }).verdict).toBe('partial');
   });
 
+  it('hampstead: the reply only cites the evidence the player actually chose', () => {
+    const offTopic = evaluate({ puzzle: 'hampstead', evidence: ['E09', 'E10'], option: 'water' });
+    expect(offTopic.verdict).toBe('insufficient');
+    expect(offTopic.lines.join('')).not.toContain('週報');
+    expect(offTopic.lines.join('')).toContain('寡婦');
+    // 選了週報、沒選便條：這時才提到週報
+    expect(evaluate({ puzzle: 'hampstead', evidence: ['E06', 'E03'], option: 'water' }).lines.join('')).toContain(
+      '週報',
+    );
+  });
+
   it('handle: only the cautious judgment backed by the daily tally', () => {
     expect(solvedCombos('handle')).toEqual(['E12:prudent']);
     expect(evaluate({ puzzle: 'handle', evidence: ['E12'], option: 'ended' }).verdict).toBe('overreach');
@@ -309,6 +321,50 @@ describe('game flow', () => {
       { type: 'submit' },
     ], s);
     expect(s.puzzle).toBe('neighbour');
+  });
+
+  it('a new clue fills the empty slot first, then replaces the most recently picked one', () => {
+    let s = run(read(['E01', 'E02', 'E03', 'E08']), playTo(1));
+    s = run(
+      [
+        { type: 'toggleSlot', id: 'E01' },
+        { type: 'toggleSlot', id: 'E02' },
+        { type: 'toggleSlot', id: 'E03' },
+      ],
+      s,
+    );
+    expect(s.slots).toEqual(['E01', 'E03']); // 最近放上的是證據二
+    expect(s.lastSlot).toBe(1);
+
+    s = run([{ type: 'clearSlot', index: 1 }, { type: 'toggleSlot', id: 'E08' }], s);
+    expect(s.slots).toEqual(['E01', 'E08']); // 空格先補滿
+
+    s = run([{ type: 'clearSlot', index: 0 }, { type: 'toggleSlot', id: 'E02' }], s);
+    expect(s.slots).toEqual(['E02', 'E08']);
+
+    s = run([{ type: 'clearSlot', index: 0 }, { type: 'toggleSlot', id: 'E03' }], s);
+    expect(s.slots).toEqual(['E03', 'E08']);
+    s = reduce(s, { type: 'toggleSlot', id: 'E01' }); // 最近放上的是證據一，換掉它
+    expect(s.slots).toEqual(['E01', 'E08']);
+    expect(s.lastSlot).toBe(0);
+  });
+
+  it('clicking the selected judgment again keeps it selected', () => {
+    const s = run(read(['E06', 'E06b']), playTo(3));
+    const chosen = reduce(s, { type: 'chooseOption', id: 'water' });
+    expect(chosen.option).toBe('water');
+    expect(reduce(chosen, { type: 'chooseOption', id: 'water' })).toBe(chosen);
+    expect(reduce(chosen, { type: 'chooseOption', id: 'air' }).option).toBe('air');
+  });
+
+  it('earlier clues are not rendered until the list is expanded', () => {
+    const s = playTo(2);
+    expect(s.showEarlier).toBe(false);
+    expect(render(s)).not.toContain('data-testid="clue-E01"');
+    const open = reduce(s, { type: 'toggleEarlier' });
+    expect(open.showEarlier).toBe(true);
+    expect(render(open)).toContain('data-testid="clue-E01"');
+    expect(reduce(open, { type: 'toggleEarlier' }).showEarlier).toBe(false);
   });
 
   it('single-slot puzzles replace the slot instead of filling a second one', () => {

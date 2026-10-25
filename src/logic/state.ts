@@ -18,6 +18,7 @@ export type Action =
   | { type: 'chooseOption'; id: string }
   | { type: 'cycleCell'; row: RowId; col: ColumnId }
   | { type: 'submit' }
+  | { type: 'toggleEarlier' }
   | { type: 'toggleSources' }
   | { type: 'restart' };
 
@@ -43,6 +44,7 @@ export function initialState(): State {
     reply: null,
     look: null,
     anomaly: false,
+    showEarlier: false,
     showSources: false,
     confirmRestart: false,
   };
@@ -102,13 +104,15 @@ function afterSequence(s: State): State {
     puzzle: CHAPTERS[next].puzzles[0],
     reply: null,
     slots: [null, null],
+    lastSlot: undefined,
     option: null,
     look: null,
+    showEarlier: false,
   };
 }
 
 function resetBoard(s: State): State {
-  return { ...s, slots: [null, null], option: null };
+  return { ...s, slots: [null, null], lastSlot: undefined, option: null };
 }
 
 function step(s: State, a: Action): State {
@@ -154,12 +158,13 @@ function step(s: State, a: Action): State {
       if (!s.seen.includes(a.id) || n === 0) return s;
       s = { ...s, reply: null }; // 換了選擇，舊回應就不再對應
       const [x, y] = s.slots;
-      if (x === a.id) return { ...s, slots: [null, y] };
-      if (y === a.id) return { ...s, slots: [x, null] };
-      if (x === null || n === 1) return { ...s, slots: [a.id, y] };
-      if (y === null) return { ...s, slots: [x, a.id] };
-      // 兩格都滿：替換第二格
-      return { ...s, slots: [x, a.id] };
+      if (x === a.id) return { ...s, slots: [null, y], lastSlot: y === null ? undefined : 1 };
+      if (y === a.id) return { ...s, slots: [x, null], lastSlot: x === null ? undefined : 0 };
+      // 先補空格，兩格都滿才替換最近放上的那一格
+      if (n === 1 || x === null) return { ...s, slots: [a.id, y], lastSlot: 0 };
+      if (y === null) return { ...s, slots: [x, a.id], lastSlot: 1 };
+      const target: 0 | 1 = s.lastSlot ?? 1;
+      return { ...s, slots: target === 0 ? [a.id, y] : [x, a.id], lastSlot: target };
     }
 
     case 'pin': {
@@ -170,13 +175,20 @@ function step(s: State, a: Action): State {
     case 'clearSlot': {
       const slots: State['slots'] = [...s.slots];
       slots[a.index] = null;
-      return { ...s, slots, reply: null };
+      const other = slots[a.index === 0 ? 1 : 0];
+      return {
+        ...s,
+        slots,
+        lastSlot: other === null ? undefined : a.index === 0 ? 1 : 0,
+        reply: null,
+      };
     }
 
     case 'chooseOption': {
-      // 比較表填完之前（或又被清空時）不能選欄；已選的可取消
-      if (PUZZLES[s.puzzle].kind === 'table' && !tableFilled(s) && s.option !== a.id) return s;
-      return { ...s, reply: null, option: s.option === a.id ? null : a.id };
+      // 比較表填完之前不能選欄；已選的再點一次不會取消
+      if (PUZZLES[s.puzzle].kind === 'table' && !tableFilled(s)) return s;
+      if (s.option === a.id) return s;
+      return { ...s, reply: null, option: a.id };
     }
 
     case 'cycleCell': {
@@ -184,7 +196,10 @@ function step(s: State, a: Action): State {
       const v = s.cells[a.row][a.col];
       // 空 → 是 → 否 → 空
       const next = v === null ? true : v ? false : null;
-      return { ...s, reply: null, cells: { ...s.cells, [a.row]: { ...s.cells[a.row], [a.col]: next } } };
+      const cells = { ...s.cells, [a.row]: { ...s.cells[a.row], [a.col]: next } };
+      // 表被改回未填滿時，結果欄與欄位選擇一起收起
+      const filled = PUZZLES[s.puzzle].kind !== 'table' || tableFilled({ ...s, cells });
+      return { ...s, reply: null, cells, option: filled ? s.option : null };
     }
 
     case 'submit': {
@@ -210,6 +225,9 @@ function step(s: State, a: Action): State {
       if (nextPuzzle) return resetBoard({ ...s, attempts, anomaly, reply, puzzle: nextPuzzle });
       return resetBoard(enterSequence({ ...s, attempts, anomaly, reply: null }, chapter.next));
     }
+
+    case 'toggleEarlier':
+      return { ...s, showEarlier: !s.showEarlier };
 
     case 'toggleSources':
       return { ...s, showSources: !s.showSources };
