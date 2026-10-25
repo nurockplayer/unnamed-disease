@@ -155,7 +155,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '「這個泵抽的是院子底下自己的井水，另外還接 Grand Junction 水務公司的水。」',
       '「院裡要用水，就在裡面取。」他頓了一下，「街上那口泵？沒有。這兒從來沒派過人去 Broad Street 打水。」',
     ],
-    takeaway: '院子裡有自己的井泵，另接 Grand Junction 供水；院裡的人從未到 Broad Street 街泵打水。',
+    takeaway: '院子裡有自己的井泵，另接 Grand Junction 供水；院裡從未派人到 Broad Street 街泵打水。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
