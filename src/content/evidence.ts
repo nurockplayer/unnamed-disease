@@ -92,6 +92,12 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
         source: `${S01}，p.42`,
       },
       {
+        kind: 'DISPUTED',
+        note:
+          '「工人根本不喝水」只是業主 Huggins 先生的看法；Snow 並未逐一核實工人是否真的只喝麥芽酒、或從未喝過其他來源的水。',
+        source: `${S01}，p.42`,
+      },
+      {
         kind: 'FICTION',
         note: '車夫與門口談話是虛構的；史料中這些話出自業主對 Snow 的陳述。',
       },
@@ -128,7 +134,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '「院裡住了五百多個人。這陣子死於霍亂的，只有幾個。」',
       '「你說還有別的？那些是病倒之後才送進來的，不算院裡的人。」',
       '你回頭看：濟貧院四面，有三面以上被死過人的房子圍著。',
-      '黑爾先生小聲算了算：「要是院裡跟四周一樣，該死上一百多人。」',
+      '黑爾先生小聲說：「要是院裡跟四周一樣，該死上一百多人。」',
     ],
     takeaway: '濟貧院五百多人，只有幾個死於霍亂；它三面以上被有死者的房子包圍。',
     provenance: [
@@ -143,7 +149,11 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
         note:
           '535／5 是 Snow 在疫情後約兩三週補做的完整查訪（p.41）；9 月 6 日當天門房不可能知道最終數字，所以對話只說「五百多人、只有幾個」。',
       },
-      { kind: 'FICTION', note: '門房與這段對話是虛構的；黑爾先生的估算借用 Snow 的推算。' },
+      {
+        kind: 'FICTION',
+        note:
+          '門房與這段對話是虛構的。「該死上一百多人」是黑爾先生自己照四周情況的推算，不是 Snow 在 9 月 6 日以前說過的話；Snow 在 1855 年的書裡做過同樣的估算（p.42），但他何時算出這個數字，史料沒有記載。',
+      },
     ],
   },
   E05: {
@@ -209,14 +219,24 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
-        note:
-          '一家咖啡館的老闆娘在 9 月 6 日告訴 Snow，她已知道九位常客死亡；店裡午餐時供應泵水。泵水也被小鋪加起泡粉當 sherbet 賣，酒館用來兌烈酒。',
+        note: '一家咖啡館的店主 9 月 6 日告訴 Snow：她已知有九位常客死亡。',
         source: `${S01}，pp.41–42`,
+      },
+      {
+        kind: 'HISTORICAL_RECORD',
+        note: '店裡午餐時供應街泵的水、客人多是工匠，是 Snow 對那家店的描述，不是店主 9 月 6 日說的話。',
+        source: `${S01}，p.41`,
+      },
+      {
+        kind: 'HISTORICAL_RECORD',
+        note:
+          '泵水也被小鋪加起泡粉當 sherbet 賣、被酒館用來兌烈酒。這同樣是 Snow 自己的記述，不是店主說的；他並說水可能還有其他他尚未知道的用途。',
+        source: `${S01}，p.42`,
       },
       {
         kind: 'FICTION',
         note:
-          '主角同一天向她打聽是虛構情節；史料中這些話是她告訴 Snow 的。「大家都說那水最清涼」與「常客是附近各自做工、來吃午飯的人，店裡只有老闆娘和一兩個幫手」是戲劇台詞；史料未記載常客的居住與工作情形。',
+          '主角同一天向她打聽是虛構情節；史料中只有「九位常客死亡」是店主告訴 Snow 的。讓她一併說出小鋪與酒館的用途是戲劇安排。「大家都說那水最清涼」與「常客是附近各自做工、來吃午飯的人，店裡只有老闆娘和一兩個幫手」是戲劇台詞；史料只說那家店的常客多是工匠、午餐時供應泵水，沒有記載常客各自的居住與工作情形。',
       },
     ],
   },
@@ -227,16 +247,25 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
     title: '《出生與死亡週報》9 月 9 日號（摘錄）',
     body: [
       'Hampstead 區：「West End，9 月 2 日，雷管製造商之遺孀，59 歲。腹瀉兩小時，流行性霍亂十六小時。」',
-      '你在旁邊註了一筆：Hampstead 在西北邊三四哩外。這陣子，那一帶沒有霍亂。',
+      '你在旁邊註了一筆：Hampstead 在西北邊好幾哩外。這陣子，那一帶沒有霍亂。',
     ],
-    takeaway: 'Hampstead 一位 59 歲寡婦 9/2 死於霍亂——她住在三四哩外，那一帶沒有霍亂。',
+    takeaway: 'Hampstead 一位 59 歲寡婦 9/2 死於霍亂——她住在好幾哩外，那一帶沒有霍亂。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
-        note: '9 月 9 日的《Weekly Return of Births and Deaths》登錄了這筆 Hampstead 死亡；當時 West End 一帶沒有霍亂。',
+        note: '9 月 9 日的《Weekly Return of Births and Deaths》登錄了這筆 Hampstead 死亡。',
         source: `${S01}，p.44`,
       },
       { kind: 'RECONSTRUCTION', note: '週報原文為英文，這裡是中文轉述。' },
+      {
+        kind: 'RECONSTRUCTION',
+        note:
+          '附註「那一帶沒有霍亂」不是週報所載，而是 Snow 事後查訪的結果（p.44）；由登記員在 9 月 12 日寫下，屬於戲劇安排。',
+      },
+      {
+        kind: 'RECONSTRUCTION',
+        note: '「西北邊好幾哩外」是製作上的地理說明，史料未載距離與方位，只說那是 Hampstead 的 West End。',
+      },
     ],
   },
   E06b: {
@@ -269,7 +298,7 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
   E12: {
     id: 'E12',
     object: '逐日統計表',
-    title: '黑爾先生的逐日統計：這一帶的霍亂死亡（暫計）',
+    title: '黑爾先生的逐日統計：這一帶的霍亂死亡（暫計，還會補登）',
     body: [
       '8 月 31 日｜3',
       '9 月 1 日｜70',
@@ -283,10 +312,11 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       '9 月 9 日｜24',
       '9 月 10 日｜18',
       '9 月 11 日｜15',
-      '（按死亡日期。很多人是前幾天發病，拖了幾天才死；若按發病日算，下降得更早。）',
+      '（按死亡日期。很多人是前幾天發病，拖了幾天才死；黑爾先生說，若按發病日排，下降還會更早。）',
+      '（登記處的數字還在補登：越近的幾天，缺漏越多。這張表之後還會再改。）',
       '黑爾先生在底下寫：「疫病一起，住戶就開始逃。最慘的幾條街，不到六天就走了四分之三以上的人。」',
     ],
-    takeaway: '每日死亡在 9/2 最多，之後逐日減少；住戶也大半逃離了。',
+    takeaway: '每日死亡在 9/2 最多，之後逐日減少；最近幾天的數字還沒補齊。住戶也大半逃離了。',
     provenance: [
       {
         kind: 'HISTORICAL_RECORD',
@@ -295,7 +325,8 @@ export const EVIDENCE: Record<EvidenceId, Evidence> = {
       },
       {
         kind: 'RECONSTRUCTION',
-        note: '取自 Snow 1855 年的最終彙整（三個分區及醫院）；這裡寫成登記員 9 月 12 日的工作統計是簡化——當時手上的數字會更少、更不全。',
+        note:
+          '逐日數字取自 Snow 1855 年的最終彙整（三個分區及醫院，Table I）；寫成登記員 9 月 12 日的統計是簡化——當時手上的數字更少、更不全，尤其越近的幾天，表上已註明仍在補登。「若按發病日排，下降還會更早」也是 Snow 事後的分析方法，這裡改由黑爾先生口頭推測。',
       },
     ],
   },

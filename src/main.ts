@@ -18,7 +18,7 @@ function loadSave(): State | null {
     if (!raw) return null;
     const saved = JSON.parse(raw) as State;
     if (!saved || saved.phase === 'title' || !Array.isArray(saved.seen) || !saved.cells?.brewery) return null;
-    return { ...saved, reading: null, boardOpen: false, confirmRestart: false };
+    return { ...saved, reading: null, boardOpen: false, confirmRestart: false, showEarlier: false };
   } catch {
     return null;
   }
@@ -151,6 +151,7 @@ function actionFrom(el: HTMLElement): Action | null {
     case 'openBoard':
     case 'closeBoard':
     case 'submit':
+    case 'toggleEarlier':
     case 'toggleSources':
     case 'restart':
       return { type };

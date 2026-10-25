@@ -141,9 +141,18 @@ function scene(s: State): string {
     </ul>
     ${
       earlier.length
-        ? `<details class="earlier"><summary>先前的線索（${earlier.length}）</summary><ul>${earlier
-            .map(clueButton)
-            .join('')}</ul></details>`
+        ? `<button class="link earlier-toggle" data-action="toggleEarlier" data-key="toggleEarlier"
+             aria-expanded="${s.showEarlier}"${s.showEarlier ? ' aria-controls="earlier-list"' : ''}
+             data-testid="earlier-toggle">先前的線索（${earlier.length}）${
+               s.showEarlier ? ' ▴' : ' ▾'
+             }</button>
+           ${
+             s.showEarlier
+               ? `<ul class="earlier-list" id="earlier-list" data-testid="earlier-list">${earlier
+                   .map(clueButton)
+                   .join('')}</ul>`
+               : ''
+           }`
         : ''
     }
     <button class="primary board-btn" data-action="openBoard" data-key="openBoard" data-testid="open-board">
@@ -284,17 +293,28 @@ function board(s: State): string {
 }
 
 function evidencePicker(s: State, n: 1 | 2): string {
+  // 兩格都滿時，下一份線索會蓋掉最近放上的那一格；在畫面上標出來
+  const replaceAt: 0 | 1 | null = n === 2 && s.slots[0] !== null && s.slots[1] !== null ? s.lastSlot ?? 1 : null;
   const slot = (i: 0 | 1) => {
     const id = s.slots[i];
     const name = n === 1 ? '證據' : `證據${i === 0 ? '一' : '二'}`;
     return id
-      ? `<button class="slot filled" data-action="clearSlot" data-index="${i}" data-key="slot-${i}" data-testid="slot-${i}">
-           <small>${name}</small><b>${esc(EVIDENCE[id].title)}</b><em>點一下移除</em></button>`
+      ? `<button class="slot filled${replaceAt === i ? ' next' : ''}" data-action="clearSlot" data-index="${i}"
+           data-key="slot-${i}" data-testid="slot-${i}">
+           <small>${name}</small><b>${esc(EVIDENCE[id].title)}</b><em>${
+             replaceAt === i ? '再選會替換這格；點一下移除' : '點一下移除'
+           }</em></button>`
       : `<div class="slot empty" data-testid="slot-${i}"><small>${name}</small>從下方線索選一份</div>`;
   };
+  const hint =
+    n === 1
+      ? '選一份；再選會替換'
+      : replaceAt === null
+        ? '選兩份；空格會先補滿'
+        : `選兩份；再選會替換${replaceAt === 0 ? '證據一' : '證據二'}`;
   return `
     <div class="slots${n === 1 ? ' one' : ''}">${slot(0)}${n === 2 ? `<span class="plus">＋</span>${slot(1)}` : ''}</div>
-    <h3>線索（選${n === 1 ? '一' : '兩'}份${n === 2 ? '；已選兩份時，再選會替換證據二' : '；再選會替換'}）</h3>
+    <h3>線索（${hint}）</h3>
     ${
       s.seen.length === 0
         ? '<p class="empty-note">還沒有線索。先調查看看。</p>'

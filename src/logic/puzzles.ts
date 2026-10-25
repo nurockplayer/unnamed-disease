@@ -92,7 +92,10 @@ export function evaluateNeighbour(option: string): Response {
     case 'lucky':
       return {
         verdict: 'insufficient',
-        lines: ['這不是回答，是打發人。', '他說的是實話——喝了沒事的人確實有。你得說清楚，這為什麼推翻不了你的表。'],
+        lines: [
+          '體質或許有關係。可他說的是一個人；四周的死亡通報，是一整片人。',
+          '你得說清楚：這個例外，為什麼推翻不了那張表。',
+        ],
       };
     case 'wrong':
       return {
@@ -127,9 +130,15 @@ export function evaluateHampstead(a: EvidenceId, b: EvidenceId, option: string):
           verdict: 'partial',
           lines: ['便條說清楚了她喝什麼。', '可她是不是死於霍亂、什麼時候死的？把週報也放上來。'],
         };
+      if (has('E06'))
+        return {
+          verdict: 'insufficient',
+          lines: ['週報只寫了她怎麼死的，沒寫她喝了什麼。'],
+        };
+      // 兩份都不是關於她的文件：只回應玩家真的選了的東西
       return {
         verdict: 'insufficient',
-        lines: ['週報只寫了她怎麼死的，沒寫她喝了什麼。'],
+        lines: ['你放上來的這兩份，都和 Hampstead 那位寡婦無關。', '桌上寫到她的事的東西，你還沒放進來。'],
       };
     case 'air':
     case 'place':
@@ -192,7 +201,7 @@ export function evaluateHandle(e: EvidenceId, option: string): Response {
         lines: tally
           ? [
               '數字往下掉，是因為泵水變乾淨了，還是因為喝它的人逃的逃、死的死？這張表分不出來。',
-              '說「沒用」，跟說「立刻見效」一樣，都說得太滿。',
+              '說「拆不拆都一樣」，跟說「立刻見效」一樣，都說得太滿。',
             ]
           : ['你憑什麼這麼說？先看看那張逐日統計。'],
       };

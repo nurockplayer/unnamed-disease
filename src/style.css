@@ -300,6 +300,11 @@ button:focus-visible,
   stroke-dasharray: 10 6;
 }
 
+/* 只有命中區接收指標事件，裝飾圖形不會遮住熱點 */
+.hotspot > :not(.hit) {
+  pointer-events: none;
+}
+
 .hotspot.seen > :not(.hit):not(.tick) {
   opacity: 0.82;
 }
@@ -309,8 +314,6 @@ button:focus-visible,
   stroke: #fff3d1;
   stroke-width: 2;
   animation: pulse 1.6s ease-in-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
 }
 
 .tick {
@@ -319,10 +322,10 @@ button:focus-visible,
   font-weight: 700;
 }
 
+/* 只淡出、不縮放：熱點的邊界框保持穩定，Pointer 與自動化操作不會被動畫干擾 */
 @keyframes pulse {
   50% {
-    transform: scale(1.5);
-    opacity: 0.6;
+    opacity: 0.45;
   }
 }
 
@@ -677,6 +680,15 @@ button:focus-visible,
   margin-top: auto;
 }
 
+/* 下一份線索會蓋掉的那一格：虛線邊＋提示字 */
+.slot.next {
+  border-style: dashed;
+}
+
+.slot.next em {
+  color: #c98a7c;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -916,14 +928,15 @@ button:focus-visible,
   justify-content: center;
 }
 
-.earlier {
+.earlier-toggle {
   font-size: 0.9rem;
   color: var(--muted);
+  margin-top: 0.4rem;
 }
 
-.earlier summary {
-  cursor: pointer;
-  margin-bottom: 0.4rem;
+.earlier-list {
+  font-size: 0.9rem;
+  margin: 0.4rem 0 0;
 }
 
 .slots.one {
