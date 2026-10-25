@@ -28,7 +28,7 @@ export const SEQUENCES: Record<SequenceId, Beat[]> = {
   ],
   to2: [
     { speaker: HALE, text: '……啤酒廠就在 Broad Street 上。那些工人，和死者吸的是同一條街的空氣。' },
-    { speaker: HALE, text: '斯諾醫生從 3 號起就開始懷疑那口泵了。上頭要我們把登記處的紀錄整理出來，給他核對。' },
+    { speaker: HALE, text: '聽說有位斯諾醫生，這幾天一直在懷疑那口泵。上頭要我們把登記處的紀錄整理出來，給他核對。' },
     { speaker: HALE, text: '你在板上的判斷，和他是同一條路：那些人不去那個街泵打水。' },
     { speaker: HALE, text: '這證明不了什麼。也許是巧合，也許是那口深井比較乾淨，也許還有別的原因。' },
     {
