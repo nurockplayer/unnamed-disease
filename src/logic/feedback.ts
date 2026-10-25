@@ -13,28 +13,22 @@ export type FeedbackAnswers = Partial<Record<(typeof FEEDBACK_QUESTIONS)[number]
 const PUZZLE_IDS = Object.keys(PUZZLES) as PuzzleId[];
 
 function durationLabel(state: State): string {
-  const start = state.chapterStartedAt?.[1];
-  const end = state.finishedAt;
-  if (typeof start !== 'number' || typeof end !== 'number') return '未記錄';
-  const minutes = Math.max(0, Math.round((end - start) / 60_000));
-  return `約 ${minutes} 分鐘`;
+  if (typeof state.playMs !== 'number') return '未記錄';
+  return `約 ${Math.max(1, Math.round(state.playMs / 60_000))} 分鐘（不含離線與長時間閒置）`;
 }
 
 function attemptSummary(state: State): string[] {
   return PUZZLE_IDS.map((puzzle) => {
-    const entries = state.attempts.filter((attempt) => attempt.puzzle === puzzle);
-    const solvedAt = entries.findIndex((attempt) => attempt.verdict === 'solved');
-    const beforeSolve = (solvedAt < 0 ? entries : entries.slice(0, solvedAt)).filter(
-      (attempt) => attempt.verdict !== 'solved',
-    ).length;
-    return `- ${PUZZLES[puzzle].objective}：${beforeSolve} 次`;
+    const tried = state.wrongSubmits?.[puzzle];
+    const distinct = state.attempts.filter((a) => a.puzzle === puzzle && a.verdict !== 'solved').length;
+    return `- ${PUZZLES[puzzle].objective}：${tried ?? distinct} 次${tried === undefined ? '（不同組合）' : ''}`;
   });
 }
 
 export function buildFeedbackStats(state: State): string {
   return [
     `總遊玩時間：${durationLabel(state)}`,
-    '各謎題在解出前的錯誤／部分推論次數：',
+    '各謎題未解開的送出次數：',
     ...attemptSummary(state),
   ].join('\n');
 }

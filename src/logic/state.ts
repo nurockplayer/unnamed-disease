@@ -89,13 +89,12 @@ const AFTER: Record<SequenceId, ChapterId | 'summary'> = { intro: 1, to2: 2, to3
 
 function afterSequence(s: State): State {
   const next = AFTER[s.sequence];
-  if (next === 'summary') return { ...s, phase: 'summary', step: 0, finishedAt: Date.now() };
+  if (next === 'summary') return { ...s, phase: 'summary', step: 0 };
   return {
     ...s,
     phase: 'scene',
     step: 0,
     chapter: next,
-    chapterStartedAt: { ...s.chapterStartedAt, [next]: Date.now() },
     puzzle: CHAPTERS[next].puzzles[0],
     reply: null,
     slots: [null, null],

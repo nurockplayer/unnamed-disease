@@ -40,11 +40,29 @@ let opener: string | null = null;
 type Dialog = 'reader' | 'board' | null;
 const dialogOf = (s: State): Dialog => (s.reading ? 'reader' : s.boardOpen ? 'board' : null);
 
+/** 兩次操作間隔超過此值就只計這麼多，避免把離開、閒置的時間算進遊玩時間 */
+const IDLE_CAP_MS = 3 * 60_000;
+let lastActionAt: number | null = null;
+
+/** 盲測回饋用的統計：實際遊玩時間與每題錯誤送出次數 */
+function track(prev: State, next: State, action: Action): State {
+  const now = Date.now();
+  const elapsed = lastActionAt === null ? 0 : Math.min(now - lastActionAt, IDLE_CAP_MS);
+  lastActionAt = now;
+  if (next.phase === 'title') return next;
+  let out = prev.phase === 'title' ? next : { ...next, playMs: (prev.playMs ?? 0) + elapsed };
+  if (action.type === 'submit' && next.reply && next.reply.verdict !== 'solved') {
+    const counts = prev.wrongSubmits ?? {};
+    out = { ...out, wrongSubmits: { ...counts, [prev.puzzle]: (counts[prev.puzzle] ?? 0) + 1 } };
+  }
+  return out;
+}
+
 function dispatch(action: Action) {
   const next = reduce(state, action);
   if (next === state) return;
   const prev = state;
-  state = next;
+  state = track(prev, next, action);
   writeSave(state);
   if (state.phase !== 'title') saved = null;
   draw(prev, action);

@@ -92,8 +92,8 @@ export interface State {
   showSources: boolean;
   /** 場景中按過一次「重新開始」，等待第二次確認 */
   confirmRestart: boolean;
-  /** 各章開始時的時間；舊存檔可能沒有此欄位 */
-  chapterStartedAt?: Partial<Record<ChapterId, number>>;
-  /** 結案時間；舊存檔可能沒有此欄位 */
-  finishedAt?: number;
+  /** 實際遊玩毫秒數（不含離線、閒置超過上限的時間）；舊存檔可能沒有此欄位 */
+  playMs?: number;
+  /** 各謎題送出後未解開的次數（含重送同一組合）；舊存檔可能沒有此欄位 */
+  wrongSubmits?: Partial<Record<PuzzleId, number>>;
 }

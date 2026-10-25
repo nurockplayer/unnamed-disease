@@ -6,8 +6,8 @@ import type { State } from '../src/logic/types';
 describe('試玩回饋', () => {
   const finished: State = {
     ...initialState(),
-    chapterStartedAt: { 1: 0 },
-    finishedAt: 18 * 60_000,
+    playMs: 18 * 60_000,
+    wrongSubmits: { table: 3 },
     attempts: [
       { puzzle: 'table', evidence: [], option: null, verdict: 'wrong' },
       { puzzle: 'table', evidence: [], option: null, verdict: 'solved' },
@@ -18,7 +18,8 @@ describe('試玩回饋', () => {
     const text = buildFeedbackReport(finished, { [FEEDBACK_QUESTIONS[0]]: '知道' }, 'abc1234');
     expect(text).toContain('版本／日期：abc1234');
     expect(text).toContain('約 18 分鐘');
-    expect(text).toMatch(/：1 次/);
+    expect(text).toMatch(/：3 次/);
+    expect(text).toMatch(/：0 次（不同組合）/);
     for (const q of FEEDBACK_QUESTIONS) expect(text).toContain(q);
     expect(text).toContain('A：知道');
     expect(text).toContain('A：（未填）');
