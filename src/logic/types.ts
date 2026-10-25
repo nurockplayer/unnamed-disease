@@ -92,4 +92,8 @@ export interface State {
   showSources: boolean;
   /** 場景中按過一次「重新開始」，等待第二次確認 */
   confirmRestart: boolean;
+  /** 各章開始時的時間；舊存檔可能沒有此欄位 */
+  chapterStartedAt?: Partial<Record<ChapterId, number>>;
+  /** 結案時間；舊存檔可能沒有此欄位 */
+  finishedAt?: number;
 }
